@@ -104,7 +104,13 @@ export function PublicHeader(props: PublicHeaderProps) {
   const desktopLinks = useMemo(() => {
     const base = dynamicLinks.length > 0 ? dynamicLinks : navLinks
     const filtered = base.filter(
-      (l) => l.href !== '/dashboard' && l.title !== t('Console')
+      (l) =>
+        l.href !== '/dashboard' &&
+        l.title !== t('Console') &&
+        l.href !== '/faq' &&
+        !l.href.startsWith('/faq') &&
+        l.title !== t('FAQ') &&
+        l.title !== 'FAQ'
     )
     // Ensure "Solutions" is included if not already present
     const hasSolutions = filtered.some(
@@ -123,22 +129,6 @@ export function PublicHeader(props: PublicHeaderProps) {
       }
     }
 
-    // Ensure "FAQ" is included if not already present
-    const hasFaq = filtered.some(
-      (l) => l.title === t('FAQ') || l.href === '/faq'
-    )
-    if (!hasFaq) {
-      const aboutIndex = filtered.findIndex((l) => l.href === '/about')
-      const faqItem: TopNavLink = {
-        title: t('FAQ'),
-        href: '/faq',
-      }
-      if (aboutIndex >= 0) {
-        filtered.splice(aboutIndex, 0, faqItem)
-      } else {
-        filtered.push(faqItem)
-      }
-    }
     return filtered
   }, [dynamicLinks, navLinks, t])
 
