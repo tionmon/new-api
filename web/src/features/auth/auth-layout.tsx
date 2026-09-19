@@ -17,8 +17,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 
+import { InteractiveGridBackground } from '@/components/interactive-grid-background'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeSwitch } from '@/components/theme-switch'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSystemConfig } from '@/hooks/use-system-config'
 
@@ -31,10 +35,14 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   const { systemName, logo, loading } = useSystemConfig()
 
   return (
-    <div className='relative grid h-svh max-w-none'>
+    <div className='bg-background text-foreground relative min-h-svh w-full overflow-x-clip isolate flex flex-col justify-center items-center'>
+      {/* Interactive Grid Background focused on the central auth card */}
+      <InteractiveGridBackground focused />
+
+      {/* Top Left: Logo & Back to Home */}
       <Link
         to='/'
-        className='absolute top-4 left-4 z-10 flex items-center gap-2 transition-opacity hover:opacity-80 sm:top-8 sm:left-8'
+        className='absolute top-4 left-4 z-20 flex items-center gap-2 transition-opacity hover:opacity-80 sm:top-8 sm:left-8'
       >
         <div className='relative h-8 w-8'>
           {loading ? (
@@ -50,13 +58,26 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {loading ? (
           <Skeleton className='h-6 w-24' />
         ) : (
-          <h1 className='text-xl font-medium'>{systemName}</h1>
+          <h1 className='text-xl font-medium tracking-tight'>{systemName}</h1>
         )}
       </Link>
-      <div className='container flex items-center pt-16 sm:pt-0'>
-        <div className='mx-auto flex w-full flex-col justify-center space-y-2 px-4 py-8 sm:w-[480px] sm:p-8'>
+
+      {/* Top Right: Language and Theme switches */}
+      <div className='absolute top-4 right-4 z-20 flex items-center gap-2 sm:top-8 sm:right-8'>
+        <LanguageSwitcher />
+        <ThemeSwitch />
+      </div>
+
+      {/* Central Focused Auth Card */}
+      <div className='container relative z-10 flex min-h-svh items-center justify-center py-16 sm:py-12'>
+        <motion.div
+          initial={{ opacity: 0, y: 16, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className='mx-auto flex w-full flex-col justify-center rounded-3xl border border-border/70 bg-card/85 p-6 shadow-2xl shadow-black/[0.04] backdrop-blur-xl sm:w-[480px] sm:p-8 dark:border-white/10 dark:bg-card/40'
+        >
           {children}
-        </div>
+        </motion.div>
       </div>
     </div>
   )

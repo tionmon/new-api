@@ -17,11 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { TopNavLink } from '../types'
+import { InteractiveGridBackground } from '@/components/interactive-grid-background'
 import { PublicHeader, type PublicHeaderProps } from './public-header'
 
 type PublicLayoutProps = {
   children: React.ReactNode
   showMainContainer?: boolean
+  showGridBackground?: boolean
   navContent?: React.ReactNode
   headerProps?: Omit<PublicHeaderProps, 'navContent'>
   navLinks?: TopNavLink[]
@@ -34,7 +36,10 @@ type PublicLayoutProps = {
 
 export function PublicLayout(props: PublicLayoutProps) {
   return (
-    <div className='bg-background text-foreground relative min-h-svh overflow-x-clip'>
+    <div className='bg-background text-foreground relative min-h-svh overflow-x-clip isolate'>
+      {/* Global HexHub dual precision engineering grid with interactive magnetic dots */}
+      {props.showGridBackground !== false && <InteractiveGridBackground />}
+
       <PublicHeader
         navContent={props.navContent}
         navLinks={props.navLinks}
@@ -47,11 +52,11 @@ export function PublicLayout(props: PublicLayoutProps) {
       />
 
       {props.showMainContainer !== false ? (
-        <main className='container px-4 py-6 pt-20 md:px-4'>
+        <main className='container relative z-10 px-4 py-6 pt-20 md:px-4'>
           {props.children}
         </main>
       ) : (
-        props.children
+        <div className='relative z-10'>{props.children}</div>
       )}
     </div>
   )

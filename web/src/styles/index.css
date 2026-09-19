@@ -123,6 +123,27 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* HexHub Precision Dual Engineering Grid Background (18px minor lines + 90px major lines, dots drawn by interactive canvas) */
+.hexhub-grid-pattern {
+  background-image:
+    linear-gradient(90deg, hsla(220, 5%, 50%, 0.055) 1px, transparent 0),
+    linear-gradient(180deg, hsla(220, 5%, 50%, 0.055) 1px, transparent 0),
+    linear-gradient(90deg, rgba(91, 96, 104, 0.13) 1px, transparent 0),
+    linear-gradient(180deg, rgba(91, 96, 104, 0.13) 1px, transparent 0);
+  background-position: top center;
+  background-size: 18px 18px, 18px 18px, 90px 90px, 90px 90px;
+}
+
+.dark .hexhub-grid-pattern {
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 0),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 1px, transparent 0),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.075) 1px, transparent 0),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075) 1px, transparent 0);
+  background-position: top center;
+  background-size: 18px 18px, 18px 18px, 90px 90px, 90px 90px;
+}
+
 /* Vercel Geist-style skeleton shimmer */
 .skeleton-shimmer {
   background: linear-gradient(

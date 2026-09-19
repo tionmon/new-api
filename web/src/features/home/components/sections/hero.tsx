@@ -16,228 +16,203 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CherryStudio } from '@lobehub/icons'
+import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, BookOpen } from 'lucide-react'
+import { motion } from 'motion/react'
+import { Activity, ArrowRight, KeyRound, Terminal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
-import { useStatus } from '@/hooks/use-status'
 
-import { HeroTerminalDemo } from '../hero-terminal-demo'
+import { HeroCliShowcase } from '../hero-cli-showcase'
 
 interface HeroProps {
   className?: string
   isAuthenticated?: boolean
 }
 
-// Stylized three-dots indicator representing "More"
-const MoreIcon = () => (
-  <svg
-    className='text-muted-foreground/60 group-hover:text-foreground size-6 shrink-0 transition-colors'
-    viewBox='0 0 24 24'
-    fill='none'
-    xmlns='http://www.w3.org/2000/svg'
-  >
-    <circle cx='6' cy='12' r='2' fill='currentColor' />
-    <circle cx='12' cy='12' r='2' fill='currentColor' />
-    <circle cx='18' cy='12' r='2' fill='currentColor' />
-  </svg>
-)
+/**
+ * Animated Typewriter Title component:
+ * Types out Line 1 ("简单操作"), then Line 2 ("即刻AI"), with a smooth pulsing cursor.
+ * Uses invisible ghost text to ensure zero layout shift from frame 0.
+ */
+function TypewriterTitle() {
+  const { t } = useTranslation()
+  const line1 = t('Simple Operations')
+  const line2 = t('Instant AI')
+  const [typed1, setTyped1] = useState('')
+  const [typed2, setTyped2] = useState('')
+  const [phase, setPhase] = useState<'typing1' | 'typing2' | 'done'>('typing1')
+
+  useEffect(() => {
+    setTyped1('')
+    setTyped2('')
+    setPhase('typing1')
+
+    let i = 0
+    let j = 0
+    let timer: ReturnType<typeof setTimeout>
+
+    function typeLine1() {
+      if (i < line1.length) {
+        i++
+        setTyped1(line1.slice(0, i))
+        timer = setTimeout(typeLine1, 80)
+      } else {
+        setPhase('typing2')
+        timer = setTimeout(typeLine2, 220)
+      }
+    }
+
+    function typeLine2() {
+      if (j < line2.length) {
+        j++
+        setTyped2(line2.slice(0, j))
+        timer = setTimeout(typeLine2, 90)
+      } else {
+        setPhase('done')
+      }
+    }
+
+    timer = setTimeout(typeLine1, 160)
+
+    return () => clearTimeout(timer)
+  }, [line1, line2])
+
+  return (
+    <h1 className='landing-animate-fade-up text-[clamp(2.6rem,5.5vw,4.2rem)] leading-[1.12] font-black tracking-tight text-foreground'>
+      <div className='relative text-neutral-900 dark:text-white'>
+        <span>{typed1}</span>
+        {phase === 'typing1' && (
+          <span className='inline-block w-[3px] h-[0.85em] ml-1.5 -mb-0.5 bg-neutral-900 dark:bg-white animate-pulse' />
+        )}
+        <span className='invisible select-none' aria-hidden>{line1.slice(typed1.length)}</span>
+      </div>
+      <div className='relative mt-1 bg-gradient-to-b from-neutral-950 via-neutral-800 to-neutral-500 bg-clip-text text-transparent dark:from-white dark:via-neutral-100 dark:to-neutral-400'>
+        <span>{typed2}</span>
+        {(phase === 'typing2' || phase === 'done') && (
+          <span className='inline-block w-[3px] h-[0.85em] ml-1.5 -mb-0.5 bg-neutral-800 dark:bg-neutral-200 animate-pulse' />
+        )}
+        <span className='invisible select-none' aria-hidden>{line2.slice(typed2.length)}</span>
+      </div>
+    </h1>
+  )
+}
 
 export function Hero(props: HeroProps) {
   const { t } = useTranslation()
-  const { status } = useStatus()
-  const docsUrl =
-    (status?.docs_link as string | undefined) || 'https://docs.newapi.pro'
 
-  const renderDocsButton = () => {
-    const isExternal = docsUrl.startsWith('http')
-    if (isExternal) {
-      return (
-        <Button
-          variant='outline'
-          className='group border-border/50 hover:border-border hover:bg-muted/50 inline-flex h-11 items-center gap-1.5 rounded-lg px-5 text-sm font-medium'
-          render={
-            <a href={docsUrl} target='_blank' rel='noopener noreferrer' />
-          }
-        >
-          <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
-          <span>{t('Docs')}</span>
-        </Button>
-      )
-    }
-    return (
-      <Button
-        variant='outline'
-        className='group border-border/50 hover:border-border hover:bg-muted/50 inline-flex h-11 items-center gap-1.5 rounded-lg px-5 text-sm font-medium'
-        render={<Link to={docsUrl} />}
-      >
-        <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
-        <span>{t('Docs')}</span>
-      </Button>
-    )
-  }
+  const steps = [
+    {
+      num: '01',
+      title: t('Create Unified Key'),
+      desc: t(
+        'Generate standard API tokens or aggregate 40+ upstream vendor channels'
+      ),
+      icon: <KeyRound className='size-4 text-neutral-700 dark:text-neutral-300' />,
+    },
+    {
+      num: '02',
+      title: t('Configure Base URL'),
+      desc: t(
+        'Set baseURL to /v1 in Claude Code, Cursor, Aider, or custom SDKs'
+      ),
+      icon: <Terminal className='size-4 text-neutral-700 dark:text-neutral-300' />,
+    },
+    {
+      num: '03',
+      title: t('Stream & Auto-Failover'),
+      desc: t(
+        'Enjoy millisecond streaming inference with zero-downtime multi-channel failover'
+      ),
+      icon: <Activity className='size-4 text-neutral-700 dark:text-neutral-300' />,
+    },
+  ]
 
   return (
-    <section className='relative z-10 overflow-hidden px-6 pt-24 pb-16 md:pt-32 md:pb-24 lg:pt-36 lg:pb-28'>
-      {/* Radial gradient background */}
-      <div
-        aria-hidden
-        className='pointer-events-none absolute inset-0 -z-10 opacity-25 dark:opacity-[0.12]'
-        style={{
-          background: [
-            'radial-gradient(ellipse 60% 50% at 20% 20%, oklch(0.72 0.18 250 / 80%) 0%, transparent 70%)',
-            'radial-gradient(ellipse 50% 40% at 80% 15%, oklch(0.65 0.15 200 / 60%) 0%, transparent 70%)',
-            'radial-gradient(ellipse 40% 35% at 40% 80%, oklch(0.70 0.12 280 / 40%) 0%, transparent 70%)',
-          ].join(', '),
-        }}
-      />
-      {/* Grid pattern */}
-      <div
-        aria-hidden
-        className='absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,black_20%,transparent_100%)] bg-[size:4rem_4rem] opacity-[0.08]'
-      />
+    <section className='relative z-10 px-4 pt-24 pb-16 sm:px-6 md:pt-32 md:pb-24 lg:px-8 lg:pt-36 lg:pb-28'>
+      <div className='mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8 xl:gap-12'>
+        {/* Left Column: Title + Vertical Animated 3-Step Quickstart + CTAs */}
+        <div className='flex flex-col items-start text-left lg:col-span-5 xl:col-span-5'>
+          {/* Animated Two-Line Typewriter Title */}
+          <TypewriterTitle />
 
-      <div className='mx-auto grid max-w-6xl grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-8'>
-        {/* Left Column: Title, description, action buttons and application support */}
-        <div className='flex flex-col items-start text-left lg:col-span-6'>
-          {/* Top Pill Badge */}
+          {/* Vertical Animated 3-Step Quickstart Pipeline (自上而下，带有动态流光连接线) */}
           <div
-            className='landing-animate-fade-up mb-5 inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1.5 text-[11px] font-medium text-blue-600 opacity-0 shadow-xs dark:border-blue-400/20 dark:bg-blue-400/5 dark:text-blue-400'
-            style={{ animationDelay: '0ms' }}
+            className='landing-animate-fade-up relative mt-8 w-full max-w-lg opacity-0'
+            style={{ animationDelay: '140ms' }}
           >
-            <span className='relative flex size-1.5'>
-              <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75' />
-              <span className='relative inline-flex size-1.5 rounded-full bg-blue-500 dark:bg-blue-400' />
-            </span>
-            <span>{t('AI Application Infrastructure Foundation')}</span>
+            {/* Connecting Vertical Track with Flowing Particle Beam */}
+            <div className='absolute left-[19px] top-6 bottom-6 w-[2px] overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800'>
+              <motion.div
+                className='h-16 w-full bg-gradient-to-b from-transparent via-neutral-400 to-transparent dark:via-neutral-500'
+                animate={{ y: ['-100%', '320%'] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }}
+              />
+            </div>
+
+            {/* Step Items */}
+            <div className='space-y-4'>
+              {steps.map((step) => (
+                <div
+                  key={step.num}
+                  className='group relative flex items-start gap-3.5 rounded-xl border border-transparent p-2 transition-all hover:border-border/50 hover:bg-card/40'
+                >
+                  {/* Step Icon Badge */}
+                  <div className='relative z-10 flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background shadow-xs ring-4 ring-background transition-transform duration-200 group-hover:scale-105'>
+                    {step.icon}
+                  </div>
+
+                  {/* Step Content */}
+                  <div className='min-w-0 flex-1 pt-0.5'>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-mono text-[11px] font-bold text-neutral-800 dark:text-neutral-200'>
+                        STEP {step.num}
+                      </span>
+                      <h3 className='text-sm font-semibold tracking-tight text-foreground'>
+                        {step.title}
+                      </h3>
+                    </div>
+                    <p className='mt-1 text-xs leading-relaxed text-muted-foreground'>
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <h1
-            className='landing-animate-fade-up text-[clamp(2.25rem,4.5vw,3.25rem)] leading-[1.15] font-bold tracking-tight'
-            style={{ animationDelay: '60ms' }}
-          >
-            {t('Unified API Gateway for')}
-            <br />
-            <span className='bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent'>
-              {t('Vast Range of AI Models')}
-            </span>
-          </h1>
-          <p
-            className='landing-animate-fade-up text-muted-foreground/80 mt-5 max-w-xl text-base leading-relaxed opacity-0 md:text-[15px]'
-            style={{ animationDelay: '120ms' }}
-          >
-            {t(
-              'Access a vast selection of models via a standard, unified API protocol. Power AI applications, manage digital assets, and connect the Future.'
-            )}
-          </p>
-
+          {/* Action buttons (Only primary CTA retained per user request) */}
           <div
-            className='landing-animate-fade-up mt-8 flex flex-wrap items-center gap-3 opacity-0'
-            style={{ animationDelay: '180ms' }}
+            className='landing-animate-fade-up mt-8 flex flex-wrap items-center gap-3.5 opacity-0'
+            style={{ animationDelay: '200ms' }}
           >
             {props.isAuthenticated ? (
-              <>
-                <Button
-                  className='group h-11 rounded-lg px-5 text-sm font-medium'
-                  render={<Link to='/dashboard' />}
-                >
-                  {t('Go to Dashboard')}
-                  <ArrowRight className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
-                </Button>
-                {renderDocsButton()}
-              </>
+              <Button
+                className='group h-12 rounded-xl px-7 text-sm font-semibold shadow-lg shadow-neutral-900/15 dark:shadow-black/40'
+                render={<Link to='/dashboard' />}
+              >
+                {t('Go to Dashboard')}
+                <ArrowRight className='ml-2 size-4 transition-transform duration-200 group-hover:translate-x-1' />
+              </Button>
             ) : (
-              <>
-                <Button
-                  className='group h-11 rounded-lg px-5 text-sm font-medium'
-                  render={<Link to='/sign-up' />}
-                >
-                  {t('Get Started')}
-                  <ArrowRight className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
-                </Button>
-                <Button
-                  variant='outline'
-                  className='border-border/50 hover:border-border hover:bg-muted/50 h-11 rounded-lg px-5 text-sm font-medium'
-                  render={<Link to='/pricing' />}
-                >
-                  {t('View Pricing')}
-                </Button>
-                {renderDocsButton()}
-              </>
+              <Button
+                className='group h-12 rounded-xl px-7 text-sm font-semibold shadow-lg shadow-neutral-900/15 dark:shadow-black/40'
+                render={<Link to='/sign-up' />}
+              >
+                {t('Get Started Now')}
+                <ArrowRight className='ml-2 size-4 transition-transform duration-200 group-hover:translate-x-1' />
+              </Button>
             )}
-          </div>
-
-          {/* Supported Apps (参考图二样式，进行卡片化和信息扩充设计，增加视觉高度) */}
-          <div
-            className='landing-animate-fade-up mt-10 w-full max-w-xl opacity-0'
-            style={{ animationDelay: '240ms' }}
-          >
-            <div className='mb-4 flex flex-col gap-1'>
-              <span className='text-muted-foreground/50 text-[10px] font-bold tracking-[0.15em] uppercase'>
-                {t('Supported Applications')}
-              </span>
-              <p className='text-muted-foreground/60 text-xs leading-relaxed'>
-                {t(
-                  'Supports one-click configuration and perfectly adapts to NewAPI multi-protocol configuration.'
-                )}
-              </p>
-            </div>
-            <div className='flex flex-wrap items-center gap-3'>
-              {/* Cherry Studio */}
-              <a
-                href='https://cherry-ai.com'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='group border-border/40 bg-muted/15 text-foreground/80 hover:border-border hover:bg-muted/30 hover:text-foreground flex items-center gap-3 rounded-full border px-5 py-2.5 text-sm font-medium shadow-[0_1px_2.5px_rgba(0,0,0,0.01)] backdrop-blur-xs transition-all duration-300 hover:scale-[1.02]'
-              >
-                <CherryStudio.Color size={24} className='shrink-0' />
-                <span>Cherry Studio</span>
-              </a>
-
-              {/* CC Switch */}
-              <a
-                href='https://ccswitch.io'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='group border-border/40 bg-muted/15 text-foreground/80 hover:border-border hover:bg-muted/30 hover:text-foreground flex items-center gap-3 rounded-full border px-5 py-2.5 text-sm font-medium shadow-[0_1px_2.5px_rgba(0,0,0,0.01)] backdrop-blur-xs transition-all duration-300 hover:scale-[1.02]'
-              >
-                <img
-                  src='https://ccswitch.io/favicon.png'
-                  alt='CC Switch'
-                  className='size-6 shrink-0 rounded-md object-contain'
-                  onError={(e) => {
-                    // Fallback to a styled text avatar if the remote favicon fails to load in sandbox or local environments
-                    e.currentTarget.style.display = 'none'
-                    const fallback = e.currentTarget.nextSibling as HTMLElement
-                    if (fallback) fallback.style.display = 'flex'
-                  }}
-                />
-                <span
-                  style={{ display: 'none' }}
-                  className='size-6 shrink-0 items-center justify-center rounded-md bg-blue-500/10 text-[10px] font-bold text-blue-600 dark:bg-blue-400/10 dark:text-blue-400'
-                >
-                  CC
-                </span>
-                <span>CC Switch</span>
-              </a>
-
-              {/* "更多" */}
-              <div className='group border-border/40 bg-muted/15 text-foreground/55 hover:border-border hover:bg-muted/30 hover:text-foreground flex cursor-default items-center gap-2.5 rounded-full border px-5 py-2.5 text-sm font-medium shadow-[0_1px_2.5px_rgba(0,0,0,0.01)] backdrop-blur-xs transition-all duration-300 hover:scale-[1.02]'>
-                <MoreIcon />
-                <span>{t('More Apps')}</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Right Column: Hero Terminal API Demo */}
+        {/* Right Column: Multi-CLI Showcase (Light & Dark mode adaptive) */}
         <div
-          className='landing-animate-fade-up flex w-full justify-center opacity-0 lg:col-span-6'
-          style={{ animationDelay: '320ms' }}
+          className='landing-animate-fade-up flex w-full justify-center opacity-0 lg:col-span-7 xl:col-span-7 lg:justify-end'
+          style={{ animationDelay: '260ms' }}
         >
-          <HeroTerminalDemo className='mt-8 lg:mt-0' />
+          <HeroCliShowcase className='mt-6 lg:mt-0' />
         </div>
       </div>
     </section>

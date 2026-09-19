@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
@@ -72,11 +73,11 @@ export function PublicHeader(props: PublicHeaderProps) {
     homeUrl = '/',
     showAuthButtons = true,
     showNotifications = true,
+    className,
   } = props
 
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [authPromptTarget, setAuthPromptTarget] =
     useState<AuthPromptTarget | null>(null)
@@ -99,6 +100,32 @@ export function PublicHeader(props: PublicHeaderProps) {
   const displaySiteName = customSiteName || systemName
   const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
 
+  // Curate desktop nav links in AWS console layout
+  // Exclude dashboard/console from left links since it lives in the AWS right auth cluster
+  const desktopLinks = useMemo(() => {
+    const base = dynamicLinks.length > 0 ? dynamicLinks : navLinks
+    const filtered = base.filter(
+      (l) => l.href !== '/dashboard' && l.title !== t('Console')
+    )
+    // Ensure "Solutions" is included if not already present
+    const hasSolutions = filtered.some(
+      (l) => l.title === t('Solutions') || l.href === '/#solutions'
+    )
+    if (!hasSolutions) {
+      const insertIndex = filtered.findIndex((l) => l.href === '/pricing')
+      const solutionsItem: TopNavLink = {
+        title: t('Solutions'),
+        href: '/#solutions',
+      }
+      if (insertIndex >= 0) {
+        filtered.splice(insertIndex + 1, 0, solutionsItem)
+      } else {
+        filtered.push(solutionsItem)
+      }
+    }
+    return filtered
+  }, [dynamicLinks, navLinks, t])
+
   let logoContent: ReactNode = (
     <HeaderLogo
       src={systemLogo}
@@ -109,25 +136,6 @@ export function PublicHeader(props: PublicHeaderProps) {
   )
   if (customLogo) logoContent = customLogo
   if (loading) logoContent = <Skeleton className='size-full rounded-lg' />
-
-  let authContent = (
-    <Button
-      size='sm'
-      className='h-8 rounded-lg px-3.5 text-xs font-medium'
-      render={<Link to='/sign-in' />}
-    >
-      {t('Sign in')}
-    </Button>
-  )
-  if (isAuthenticated) authContent = <ProfileDropdown />
-  if (loading) authContent = <Skeleton className='h-8 w-20 rounded-lg' />
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
@@ -199,47 +207,40 @@ export function PublicHeader(props: PublicHeaderProps) {
 
   return (
     <>
-      <header className='pointer-events-none fixed inset-x-0 top-0 z-50'>
-        <div
-          className={cn(
-            'pointer-events-auto mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
-            scrolled ? 'max-w-[52rem] px-3 pt-3' : 'max-w-7xl px-4 pt-0 md:px-6'
-          )}
-        >
-          <nav
-            className={cn(
-              'flex items-center justify-between gap-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
-              scrolled
-                ? 'bg-background/60 ring-border/50 h-12 rounded-2xl pr-1.5 pl-4 shadow-[0_2px_16px_-6px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.02)] ring-[0.5px] backdrop-blur-2xl dark:shadow-[0_2px_16px_-6px_rgba(0,0,0,0.4)]'
-                : 'h-16 px-2'
-            )}
-          >
-            {/* Logo */}
-            <div className='@container/system-brand flex min-w-0 flex-1 items-center gap-1 lg:min-w-36'>
-              <Link
-                to={homeUrl}
-                className='group flex min-w-0 items-center gap-2.5'
+      <header
+        className={cn(
+          'fixed inset-x-0 top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md transition-colors duration-200',
+          className
+        )}
+      >
+        <div className='mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8'>
+          {/* Left section: Logo + AI Gateway + Divider + Navigation links */}
+          <div className='flex items-center gap-2 lg:gap-6'>
+            <Link
+              to={homeUrl}
+              className='group flex items-center gap-2 shrink-0 select-none'
+            >
+              <div className='flex size-7 shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-105'>
+                {logoContent}
+              </div>
+              <span
+                className='text-sm font-bold tracking-tight text-foreground sm:inline-block'
+                title={displaySiteName}
               >
-                <div className='flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105'>
-                  {logoContent}
-                </div>
-                <span
-                  className='max-w-48 truncate text-sm font-semibold tracking-tight'
-                  title={displaySiteName}
-                >
-                  {loading ? (
-                    <Skeleton className='h-4 w-16' />
-                  ) : (
-                    displaySiteName
-                  )}
-                </span>
-              </Link>
-              <SystemUpdateAction presentation='version' />
-            </div>
+                {loading ? <Skeleton className='h-4 w-16' /> : displaySiteName}
+              </span>
+              <span className='hidden text-[11px] font-semibold text-muted-foreground/80 md:inline-block'>
+                AI Gateway
+              </span>
+            </Link>
 
-            {/* Desktop nav */}
-            <div className='hidden min-w-0 items-center gap-0.5 lg:flex'>
-              {links.map((link) => {
+            <SystemUpdateAction presentation='version' />
+
+            <div className='hidden h-4 w-px bg-border/60 lg:block' />
+
+            {/* Desktop Navigation Links */}
+            <nav className='hidden items-center gap-6 lg:flex'>
+              {desktopLinks.map((link) => {
                 const isActive = pathname === link.href
                 if (link.external) {
                   return (
@@ -253,7 +254,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                       tabIndex={link.disabled ? -1 : undefined}
                       onClick={(event) => handleNavLinkClick(event, link)}
                       className={cn(
-                        'text-muted-foreground hover:text-foreground min-w-0 truncate rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200',
+                        'text-xs font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground',
                         link.disabled && 'pointer-events-none opacity-50'
                       )}
                     >
@@ -269,9 +270,9 @@ export function PublicHeader(props: PublicHeaderProps) {
                     disabled={link.disabled}
                     onClick={(event) => handleNavLinkClick(event, link)}
                     className={cn(
-                      'min-w-0 truncate rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200',
+                      'text-xs font-medium transition-colors duration-150',
                       isActive
-                        ? 'text-foreground'
+                        ? 'font-semibold text-foreground'
                         : 'text-muted-foreground hover:text-foreground',
                       link.disabled && 'pointer-events-none opacity-50'
                     )}
@@ -280,39 +281,75 @@ export function PublicHeader(props: PublicHeaderProps) {
                   </Link>
                 )
               })}
+            </nav>
+          </div>
 
-              {(showLanguageSwitcher ||
-                showThemeSwitch ||
-                showNotifications) && (
-                <div className='bg-border/40 mx-2 h-4 w-px' />
-              )}
+          {/* Right section: Search + Lang + Theme + Notify + Auth (AWS Style) */}
+          <div className='flex items-center gap-3'>
+            {/* Search Trigger */}
+            <Link
+              to='/pricing'
+              className='hidden items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors sm:flex'
+              title={t('Search models & capabilities')}
+            >
+              <Search className='size-3.5' />
+              <span>{t('Search')}</span>
+            </Link>
 
-              {showLanguageSwitcher && <LanguageSwitcher />}
-              {showThemeSwitch && <ThemeSwitch />}
-              {showNotifications && (
-                <NotificationPopover
-                  open={notifications.popoverOpen}
-                  onOpenChange={notifications.setPopoverOpen}
-                  unreadCount={notifications.unreadCount}
-                  activeTab={notifications.activeTab}
-                  onTabChange={notifications.setActiveTab}
-                  notice={notifications.notice}
-                  announcements={notifications.announcements}
-                  loading={notifications.loading}
-                />
-              )}
+            {showLanguageSwitcher && <LanguageSwitcher />}
+            {showThemeSwitch && <ThemeSwitch />}
+            {showNotifications && (
+              <NotificationPopover
+                open={notifications.popoverOpen}
+                onOpenChange={notifications.setPopoverOpen}
+                unreadCount={notifications.unreadCount}
+                activeTab={notifications.activeTab}
+                onTabChange={notifications.setActiveTab}
+                notice={notifications.notice}
+                announcements={notifications.announcements}
+                loading={notifications.loading}
+              />
+            )}
 
-              {showAuthButtons && (
-                <>
-                  <div className='bg-border/40 mx-1 h-4 w-px' />
-                  {authContent}
-                </>
-              )}
-            </div>
+            {showAuthButtons && (
+              <>
+                <div className='hidden h-4 w-px bg-border/40 lg:block' />
+                <div className='hidden items-center gap-3 lg:flex'>
+                  {loading ? (
+                    <Skeleton className='h-8 w-24 rounded-full' />
+                  ) : isAuthenticated ? (
+                    <>
+                      <Link
+                        to='/dashboard'
+                        className='text-xs font-medium text-foreground/80 hover:text-foreground transition-colors px-1 py-1'
+                      >
+                        {t('Console')}
+                      </Link>
+                      <ProfileDropdown />
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to='/sign-in'
+                        className='text-xs font-medium text-foreground/80 hover:text-foreground transition-colors px-1 py-1'
+                      >
+                        {t('Sign in to Console')}
+                      </Link>
+                      <Button
+                        size='sm'
+                        className='h-8 rounded-full bg-foreground text-background hover:bg-foreground/90 px-4 text-xs font-semibold shadow-xs transition-all'
+                        render={<Link to='/sign-up' />}
+                      >
+                        {t('Create Account')}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
 
-            {/* Mobile: compact actions + hamburger */}
-            <div className='flex shrink-0 items-center gap-2 lg:hidden'>
-              {showThemeSwitch && <ThemeSwitch />}
+            {/* Mobile hamburger button */}
+            <div className='flex shrink-0 items-center gap-1.5 lg:hidden'>
               {showAuthButtons && !loading && isAuthenticated && (
                 <ProfileDropdown />
               )}
@@ -320,7 +357,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                 type='button'
                 variant='ghost'
                 size='icon'
-                className='size-9'
+                className='size-8'
                 onClick={() => setMobileOpen((v) => !v)}
                 aria-label={t('Toggle navigation menu')}
               >
@@ -346,7 +383,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                 </div>
               </Button>
             </div>
-          </nav>
+          </div>
         </div>
       </header>
 
@@ -416,13 +453,34 @@ export function PublicHeader(props: PublicHeaderProps) {
             style={{ transitionDelay: mobileOpen ? '250ms' : '0ms' }}
           >
             {showAuthButtons && (
-              <Link
-                to={isAuthenticated ? '/dashboard' : '/sign-in'}
-                onClick={() => setMobileOpen(false)}
-                className='bg-foreground text-background inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80'
-              >
-                {isAuthenticated ? t('Go to Dashboard') : t('Sign in')}
-              </Link>
+              <div className='flex flex-col gap-2'>
+                {isAuthenticated ? (
+                  <Link
+                    to='/dashboard'
+                    onClick={() => setMobileOpen(false)}
+                    className='bg-foreground text-background inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80'
+                  >
+                    {t('Console')}
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to='/sign-in'
+                      onClick={() => setMobileOpen(false)}
+                      className='border border-border/60 text-foreground inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-colors hover:bg-muted/50'
+                    >
+                      {t('Sign in to Console')}
+                    </Link>
+                    <Link
+                      to='/sign-up'
+                      onClick={() => setMobileOpen(false)}
+                      className='bg-foreground text-background inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80'
+                    >
+                      {t('Create Account')}
+                    </Link>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>

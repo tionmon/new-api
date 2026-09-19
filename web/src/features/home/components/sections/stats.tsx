@@ -87,37 +87,60 @@ interface StatsProps {
   className?: string
 }
 
-interface StatItem {
-  end: number
-  suffix: string
-  label: string
-  decimals?: number
-}
-
 export function Stats(_props: StatsProps) {
   const { t } = useTranslation()
 
-  const stats: StatItem[] = [
-    { end: 50, suffix: '+', label: t('upstream services integrated') },
-    { end: 100, suffix: '+', label: t('model billing support') },
-    { end: 50, suffix: '+', label: t('compatible API routes') },
-    { end: 10, suffix: '+', label: t('scheduling controls') },
+  const stats = [
+    {
+      end: 40,
+      suffix: '+',
+      label: t('Upstream Providers Aggregated'),
+      highlight: t('OpenAI, Claude, Gemini, DeepSeek & more'),
+    },
+    {
+      end: 100,
+      suffix: '+',
+      label: t('Frontier Models Supported'),
+      highlight: t('Text, Vision, Reasoning, Image, Voice'),
+    },
+    {
+      end: 5,
+      prefix: '< ',
+      suffix: 'ms',
+      label: t('Core Routing Overhead'),
+      highlight: t('Ultra-low latency stream proxy'),
+    },
+    {
+      end: 99.99,
+      suffix: '%',
+      decimals: 2,
+      label: t('High-Availability Uptime'),
+      highlight: t('Multi-cluster automated failover'),
+    },
   ]
 
   return (
-    <div className='border-border/40 bg-muted/10 relative z-10 border-y'>
-      <div className='mx-auto max-w-6xl px-6 py-10 md:py-12'>
-        <div className='grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12'>
+    <div className='relative z-10 border-y border-border/40 bg-muted/15 py-12 md:py-16'>
+      <div className='mx-auto max-w-6xl px-6'>
+        <div className='grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8'>
           {stats.map((s) => (
             <div
               key={s.label}
-              className='flex flex-col items-center text-center'
+              className='flex flex-col items-center text-center p-4 rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xs transition-all duration-300 hover:border-primary/30'
             >
-              <span className='text-2xl font-bold tracking-tight md:text-3xl'>
-                <Counter end={s.end} suffix={s.suffix} decimals={s.decimals} />
+              <span className='bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-3xl font-extrabold tracking-tight text-transparent md:text-4xl'>
+                <Counter
+                  end={s.end}
+                  prefix={s.prefix}
+                  suffix={s.suffix}
+                  decimals={s.decimals}
+                />
               </span>
-              <span className='text-muted-foreground mt-1.5 text-xs'>
+              <span className='mt-2 text-sm font-semibold text-foreground'>
                 {s.label}
+              </span>
+              <span className='mt-1 text-xs text-muted-foreground line-clamp-1'>
+                {s.highlight}
               </span>
             </div>
           ))}

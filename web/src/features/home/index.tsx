@@ -26,7 +26,15 @@ import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { CTA, Features, Hero, HowItWorks, Stats } from './components'
+import {
+  CTA,
+  CodeQuickstart,
+  FAQ,
+  Features,
+  GatewayFlowVisualizer,
+  Hero,
+  ProviderMarquee,
+} from './components'
 import { useHomePageContent } from './hooks'
 
 export function Home() {
@@ -122,12 +130,26 @@ export function Home() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <Hero isAuthenticated={isAuthenticated} />
-      <Stats />
-      <Features />
-      <HowItWorks />
-      <CTA isAuthenticated={isAuthenticated} />
-      <Footer />
+      <div className='relative min-h-screen'>
+        {/* Top Centered Subtle Lens Ambient Glow (Pure Monochrome / Graphite, Zero Blue/Purple) */}
+        <div
+          aria-hidden
+          className='pointer-events-none absolute top-0 left-1/2 h-[600px] w-[1100px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-60 blur-[130px] dark:opacity-25'
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(140, 150, 170, 0.14) 0%, rgba(100, 110, 130, 0.03) 55%, transparent 75%)',
+          }}
+        />
+
+        <Hero isAuthenticated={isAuthenticated} />
+        <ProviderMarquee />
+        <GatewayFlowVisualizer />
+        <Features />
+        <CodeQuickstart />
+        <FAQ />
+        <CTA isAuthenticated={isAuthenticated} />
+        <Footer />
+      </div>
     </PublicLayout>
   )
 }
