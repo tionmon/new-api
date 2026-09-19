@@ -99,6 +99,11 @@ export function useTopNavLinks(): TopNavLink[] {
     }
   }
 
+  // FAQ
+  if (modules?.faq !== false) {
+    links.push({ title: t('FAQ'), href: '/faq' })
+  }
+
   // About
   if (modules?.about !== false) {
     links.push({ title: t('About'), href: '/about' })

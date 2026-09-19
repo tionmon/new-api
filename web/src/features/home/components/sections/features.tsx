@@ -17,12 +17,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import {
-  Zap,
-  Shield,
-  Layers,
-  ArrowLeftRight,
+  BarChart3,
   CheckCircle2,
-  Lock,
+  KeyRound,
+  Layers,
+  Sparkles,
+  Users,
   Wallet,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -42,194 +42,187 @@ export function Features(_props: FeaturesProps) {
       <div className='mx-auto max-w-6xl'>
         {/* Section Header */}
         <AnimateInView className='mb-16 text-center md:mb-20'>
-          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3.5 py-1.5 text-xs font-medium text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 shadow-xs'>
+          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3.5 py-1.5 text-xs font-medium text-neutral-800 shadow-xs dark:border-white/10 dark:bg-white/5 dark:text-neutral-300'>
             <Layers className='size-3.5 text-neutral-600 dark:text-neutral-400' />
             <span>{t('Core Capabilities')}</span>
           </div>
-          <h2 className='text-3xl font-bold tracking-tight text-foreground md:text-4xl'>
-            {t('Engineered for High-Concurrency AI Workloads')}
+          <h2 className='text-foreground text-3xl font-bold tracking-tight md:text-4xl'>
+            {t('Engineered for Everyone: Simple, Powerful & Transparent')}
           </h2>
-          <p className='mx-auto mt-3 max-w-2xl text-sm text-muted-foreground/80 md:text-base'>
+          <p className='text-muted-foreground/80 mx-auto mt-3 max-w-2xl text-sm md:text-base'>
             {t(
-              'A robust, production-ready gateway offering enterprise security, dynamic routing, transparent accounting, and protocol interop.'
+              'From individual developers to growing teams, manage models, quotas, and access channels all in one place.'
             )}
           </p>
         </AnimateInView>
 
         {/* Bento Box Grid */}
         <div className='grid grid-cols-1 gap-5 md:grid-cols-3'>
-          {/* Bento Item 1: Large Span 2 - Smart Routing & Failover */}
+          {/* Bento Item 1: Large Span 2 - Unified Model Access */}
           <AnimateInView
             animation='fade-up'
             delay={0}
-            className='group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 p-6 md:col-span-2 md:p-8 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 dark:hover:border-white/20 dark:hover:shadow-black/20'
+            className='group border-border/60 from-card/80 to-card/40 relative flex flex-col justify-between overflow-hidden rounded-3xl border bg-gradient-to-b p-6 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 md:col-span-2 md:p-8 dark:hover:border-white/20 dark:hover:shadow-black/20'
           >
             <div>
               <div className='flex size-11 items-center justify-center rounded-2xl border border-neutral-300 bg-neutral-100 text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'>
-                <Zap className='size-5.5' />
+                <KeyRound className='size-5.5' />
               </div>
-              <h3 className='mt-5 text-xl font-bold tracking-tight text-foreground'>
-                {t('Smart Multi-Channel Routing & Auto-Failover')}
+              <h3 className='text-foreground mt-5 text-xl font-bold tracking-tight'>
+                {t('Unified Model Access: One Key For Everything')}
               </h3>
-              <p className='mt-2 max-w-xl text-sm text-muted-foreground/80 leading-relaxed'>
+              <p className='text-muted-foreground/80 mt-2 max-w-xl text-sm leading-relaxed'>
                 {t(
-                  'Distribute traffic across dozens of upstream channels by weight or priority. Automatically retry healthy alternatives within milliseconds when upstream rate limits or outages occur.'
+                  'No need to register dozens of accounts or manage fragmented keys. Access leading commercial and open-source models through a single standard endpoint across all your tools.'
                 )}
               </p>
             </div>
 
-            {/* Interactive Visual Element */}
-            <div className='mt-6 rounded-2xl border border-border/50 bg-background/60 p-4 font-mono text-xs'>
-              <div className='flex items-center justify-between border-b border-border/40 pb-2.5 text-muted-foreground'>
-                <span className='font-sans font-medium'>{t('Active Channel Health')}</span>
-                <span className='flex items-center gap-1.5 text-emerald-500'>
-                  <span className='size-2 rounded-full bg-emerald-500 animate-pulse' />
-                  {t('Optimal')}
+            {/* Visual Element: Converging model logos */}
+            <div className='border-border/50 bg-background/60 mt-6 rounded-2xl border p-4 text-xs'>
+              <div className='border-border/40 flex flex-wrap items-center justify-between gap-2 border-b pb-3'>
+                <span className='text-foreground flex items-center gap-1.5 font-medium'>
+                  <Sparkles className='text-primary size-3.5' />
+                  {t('Chat • Coding • Drawing • Multimodal')}
+                </span>
+                <span className='rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400'>
+                  100% OpenAI Compatible
                 </span>
               </div>
-              <div className='mt-3 space-y-2.5'>
-                <div className='flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2'>
-                  <div className='flex items-center gap-2.5'>
-                    <div className='flex size-5 items-center justify-center'>
-                      {getLobeIcon('OpenAI', 16)}
+              <div className='mt-3 flex flex-wrap items-center gap-2'>
+                {[
+                  { name: 'OpenAI', icon: 'OpenAI' },
+                  { name: 'Anthropic', icon: 'Claude.Color' },
+                  { name: 'Google', icon: 'Gemini.Color' },
+                  { name: 'DeepSeek', icon: 'DeepSeek.Color' },
+                  { name: 'Mistral', icon: 'Mistral.Color' },
+                  { name: 'Midjourney', icon: 'Midjourney' },
+                ].map((m) => (
+                  <div
+                    key={m.name}
+                    className='border-border/40 bg-muted/20 text-foreground flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium'
+                  >
+                    <div className='flex size-4.5 items-center justify-center'>
+                      {getLobeIcon(m.icon, 16)}
                     </div>
-                    <span className='text-foreground font-sans font-medium'>OpenAI Tier-5 Cluster</span>
+                    <span>{m.name}</span>
                   </div>
-                  <span className='text-emerald-500 font-semibold'>42ms • 100% Health</span>
-                </div>
-                <div className='flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2'>
-                  <div className='flex items-center gap-2.5'>
-                    <div className='flex size-5 items-center justify-center'>
-                      {getLobeIcon('Claude.Color', 16)}
-                    </div>
-                    <span className='text-foreground font-sans font-medium'>AWS Bedrock Claude Sonnet</span>
-                  </div>
-                  <span className='text-emerald-500 font-semibold'>68ms • 100% Health</span>
-                </div>
-                <div className='flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2'>
-                  <div className='flex items-center gap-2.5'>
-                    <div className='flex size-5 items-center justify-center'>
-                      {getLobeIcon('DeepSeek.Color', 16)}
-                    </div>
-                    <span className='text-foreground font-sans font-medium'>DeepSeek Official Direct</span>
-                  </div>
-                  <span className='text-neutral-600 dark:text-neutral-400 font-semibold'>28ms • Failover Standby</span>
-                </div>
+                ))}
               </div>
             </div>
           </AnimateInView>
 
-          {/* Bento Item 2: Span 1 - Enterprise Security */}
+          {/* Bento Item 2: Span 1 - Transparent Quota & Budget */}
           <AnimateInView
             animation='fade-up'
             delay={100}
-            className='group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 p-6 md:p-8 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 dark:hover:border-white/20 dark:hover:shadow-black/20'
-          >
-            <div>
-              <div className='flex size-11 items-center justify-center rounded-2xl border border-neutral-300 bg-neutral-100 text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'>
-                <Shield className='size-5.5' />
-              </div>
-              <h3 className='mt-5 text-xl font-bold tracking-tight text-foreground'>
-                {t('OWASP ASVS Grade Security')}
-              </h3>
-              <p className='mt-2 text-sm text-muted-foreground/80 leading-relaxed'>
-                {t(
-                  'Comprehensive protection including WebAuthn Passkeys, 2FA, token rate-limiting, IP whitelists, and SSRF defenses.'
-                )}
-              </p>
-            </div>
-
-            <div className='mt-6 space-y-2 rounded-2xl border border-border/50 bg-background/60 p-4 text-xs'>
-              <div className='flex items-center gap-2 text-foreground font-medium'>
-                <Lock className='size-3.5 text-emerald-500' />
-                <span>{t('Strict Token Isolation')}</span>
-              </div>
-              <div className='flex items-center gap-2 text-foreground font-medium'>
-                <CheckCircle2 className='size-3.5 text-emerald-500' />
-                <span>{t('No Secret Leakage in Logs')}</span>
-              </div>
-              <div className='flex items-center gap-2 text-foreground font-medium'>
-                <CheckCircle2 className='size-3.5 text-emerald-500' />
-                <span>{t('Sub-token Group Permissions')}</span>
-              </div>
-            </div>
-          </AnimateInView>
-
-          {/* Bento Item 3: Span 1 - Transparent Quota & Billing */}
-          <AnimateInView
-            animation='fade-up'
-            delay={150}
-            className='group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 p-6 md:p-8 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 dark:hover:border-white/20 dark:hover:shadow-black/20'
+            className='group border-border/60 from-card/80 to-card/40 relative flex flex-col justify-between overflow-hidden rounded-3xl border bg-gradient-to-b p-6 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 md:p-8 dark:hover:border-white/20 dark:hover:shadow-black/20'
           >
             <div>
               <div className='flex size-11 items-center justify-center rounded-2xl border border-neutral-300 bg-neutral-100 text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'>
                 <Wallet className='size-5.5' />
               </div>
-              <h3 className='mt-5 text-xl font-bold tracking-tight text-foreground'>
-                {t('Overflow-Safe Billing Engine')}
+              <h3 className='text-foreground mt-5 text-xl font-bold tracking-tight'>
+                {t('Transparent Budget & Quota Control')}
               </h3>
-              <p className='mt-2 text-sm text-muted-foreground/80 leading-relaxed'>
+              <p className='text-muted-foreground/80 mt-2 text-sm leading-relaxed'>
                 {t(
-                  'Dynamic pricing expressions for prompt caching, reasoning tokens, and task durations. Pre-deduction and settlement prevent debt.'
+                  'Set token quotas, daily budgets, or use redemption cards. Real-time billing prevents unexpected overage so you always stay fully in control.'
                 )}
               </p>
             </div>
 
-            <div className='mt-6 rounded-2xl border border-border/50 bg-background/60 p-4 text-xs space-y-2'>
-              <div className='flex justify-between items-center text-muted-foreground'>
-                <span>{t('Input Tokens')}</span>
-                <span className='font-mono font-medium text-foreground'>$0.002 / 1K</span>
+            <div className='border-border/50 bg-background/60 mt-6 space-y-2 rounded-2xl border p-4 text-xs'>
+              <div className='text-foreground flex items-center gap-2 font-medium'>
+                <CheckCircle2 className='size-3.5 shrink-0 text-emerald-500' />
+                <span>{t('Pre-allocated Quotas')}</span>
               </div>
-              <div className='flex justify-between items-center text-muted-foreground'>
-                <span>{t('Prompt Caching')}</span>
-                <span className='font-mono font-medium text-emerald-500'>-80% Discount</span>
+              <div className='text-foreground flex items-center gap-2 font-medium'>
+                <CheckCircle2 className='size-3.5 shrink-0 text-emerald-500' />
+                <span>{t('Zero Overage Risk')}</span>
               </div>
-              <div className='flex justify-between items-center text-muted-foreground'>
-                <span>{t('Settlement Precision')}</span>
-                <span className='font-mono font-medium text-foreground'>int32 Safe Clamping</span>
+              <div className='text-foreground flex items-center gap-2 font-medium'>
+                <CheckCircle2 className='size-3.5 shrink-0 text-emerald-500' />
+                <span>{t('Redemption Cards Supported')}</span>
               </div>
             </div>
           </AnimateInView>
 
-          {/* Bento Item 4: Large Span 2 - Full Protocol Translation */}
+          {/* Bento Item 3: Span 1 - Team Collaboration & Group Routing */}
           <AnimateInView
             animation='fade-up'
-            delay={200}
-            className='group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 p-6 md:col-span-2 md:p-8 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 dark:hover:border-white/20 dark:hover:shadow-black/20'
+            delay={150}
+            className='group border-border/60 from-card/80 to-card/40 relative flex flex-col justify-between overflow-hidden rounded-3xl border bg-gradient-to-b p-6 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 md:p-8 dark:hover:border-white/20 dark:hover:shadow-black/20'
           >
             <div>
               <div className='flex size-11 items-center justify-center rounded-2xl border border-neutral-300 bg-neutral-100 text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'>
-                <ArrowLeftRight className='size-5.5' />
+                <Users className='size-5.5' />
               </div>
-              <h3 className='mt-5 text-xl font-bold tracking-tight text-foreground'>
-                {t('Bidirectional Multi-Protocol Interop')}
+              <h3 className='text-foreground mt-5 text-xl font-bold tracking-tight'>
+                {t('Team Collaboration & Group Channel Routing')}
               </h3>
-              <p className='mt-2 max-w-xl text-sm text-muted-foreground/80 leading-relaxed'>
+              <p className='text-muted-foreground/80 mt-2 text-sm leading-relaxed'>
                 {t(
-                  'Send OpenAI formatted requests to Claude or Gemini, or call native Anthropic Messages API. New API translates payload structures, tools/function calls, and SSE stream chunks automatically.'
+                  'Assign users to different tiers like free trial or VIP dedicated channels. Keep your master upstream credentials completely private and secure.'
                 )}
               </p>
             </div>
 
-            {/* Protocol conversion pipeline illustration */}
-            <div className='mt-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-border/50 bg-background/60 p-4 text-xs'>
-              <span className='rounded-md border border-border/40 bg-muted/30 px-3 py-1.5 font-mono font-medium text-foreground'>
-                OpenAI /v1/chat
-              </span>
-              <ArrowLeftRight className='size-4 text-neutral-400 dark:text-neutral-500 shrink-0' />
-              <span className='rounded-md border border-neutral-300 bg-neutral-200/80 px-3 py-1.5 font-mono font-medium text-neutral-800 dark:border-white/15 dark:bg-white/10 dark:text-white'>
-                New API Core (RelayKit)
-              </span>
-              <ArrowLeftRight className='size-4 text-neutral-400 dark:text-neutral-500 shrink-0' />
-              <div className='flex gap-1.5'>
-                <span className='rounded-md border border-border/40 bg-muted/30 px-2.5 py-1.5 font-mono text-muted-foreground'>
-                  Claude
+            <div className='border-border/50 bg-background/60 mt-6 space-y-2 rounded-2xl border p-4 text-xs'>
+              <div className='text-muted-foreground flex items-center justify-between'>
+                <span>{t('Standard Channel')}</span>
+                <span className='text-foreground font-medium'>
+                  Default Tier
                 </span>
-                <span className='rounded-md border border-border/40 bg-muted/30 px-2.5 py-1.5 font-mono text-muted-foreground'>
-                  Gemini
+              </div>
+              <div className='text-muted-foreground flex items-center justify-between'>
+                <span>{t('VIP Dedicated Line')}</span>
+                <span className='font-medium text-emerald-500'>
+                  High-Speed Priority
                 </span>
-                <span className='rounded-md border border-border/40 bg-muted/30 px-2.5 py-1.5 font-mono text-muted-foreground'>
-                  Midjourney
+              </div>
+              <div className='text-muted-foreground flex items-center justify-between'>
+                <span>{t('Master Keys Concealed')}</span>
+                <span className='text-foreground font-medium'>100% Safe</span>
+              </div>
+            </div>
+          </AnimateInView>
+
+          {/* Bento Item 4: Large Span 2 - Visual Analytics & Logs */}
+          <AnimateInView
+            animation='fade-up'
+            delay={200}
+            className='group border-border/60 from-card/80 to-card/40 relative flex flex-col justify-between overflow-hidden rounded-3xl border bg-gradient-to-b p-6 backdrop-blur-xs transition-all duration-300 hover:border-neutral-400/80 hover:shadow-xl hover:shadow-black/5 md:col-span-2 md:p-8 dark:hover:border-white/20 dark:hover:shadow-black/20'
+          >
+            <div>
+              <div className='flex size-11 items-center justify-center rounded-2xl border border-neutral-300 bg-neutral-100 text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'>
+                <BarChart3 className='size-5.5' />
+              </div>
+              <h3 className='text-foreground mt-5 text-xl font-bold tracking-tight'>
+                {t('Visual Analytics & Complete Audit Logs')}
+              </h3>
+              <p className='text-muted-foreground/80 mt-2 max-w-xl text-sm leading-relaxed'>
+                {t(
+                  'Track request volume, latency trends, and model consumption distribution with intuitive charts. Every single request is traceable whenever you need it.'
+                )}
+              </p>
+            </div>
+
+            {/* Metrics Chips */}
+            <div className='border-border/50 bg-background/60 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4 text-xs'>
+              <div className='flex items-center gap-2'>
+                <span className='size-2 animate-pulse rounded-full bg-emerald-500' />
+                <span className='text-foreground font-medium'>
+                  {t('Real-time Call Charts')}
+                </span>
+              </div>
+              <div className='text-muted-foreground flex items-center gap-2'>
+                <CheckCircle2 className='size-3.5 text-emerald-500' />
+                <span>{t('Detailed Token Logs')}</span>
+              </div>
+              <div className='text-muted-foreground flex items-center gap-2'>
+                <span className='text-foreground font-mono font-medium'>
+                  P95 &lt; 50ms
                 </span>
               </div>
             </div>

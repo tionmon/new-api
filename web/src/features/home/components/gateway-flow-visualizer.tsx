@@ -16,13 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Activity,
-  Cpu,
-  RefreshCw,
+  ArrowDown,
+  ArrowRight,
   CheckCircle2,
+  Cpu,
+  ShieldCheck,
 } from 'lucide-react'
 
 import { AnimateInView } from '@/components/animate-in-view'
@@ -32,250 +33,468 @@ import { cn } from '@/lib/utils'
 export function GatewayFlowVisualizer() {
   const { t } = useTranslation()
   const [failoverActive, setFailoverActive] = useState(false)
-  const [requestCount, setRequestCount] = useState(14820)
-  const [activeRouteIndex, setActiveRouteIndex] = useState(0)
+  const [activeClientIndex, setActiveClientIndex] = useState(0)
 
-  // Increment live simulated request counter
+  // Rotating client activity
   useEffect(() => {
     const timer = setInterval(() => {
-      setRequestCount((prev) => prev + Math.floor(Math.random() * 4) + 1)
-      setActiveRouteIndex((prev) => (prev + 1) % 3)
-    }, 1800)
+      setActiveClientIndex((prev) => (prev + 1) % 3)
+    }, 2400)
     return () => clearInterval(timer)
   }, [])
 
   return (
-    <section id='solutions' className='relative z-10 border-t border-border/40 bg-card/10 py-16 md:py-24 overflow-hidden'>
-      {/* Background ambient lighting */}
+    <section
+      id='solutions'
+      className='scroll-mt-16 md:scroll-mt-20 border-border/40 bg-card/10 relative z-10 overflow-hidden border-t py-16 md:py-24'
+    >
+      {/* 60fps/120fps hardware-accelerated linear flow with zero stutter/jitter */}
+      <style>{`
+        @keyframes flowDashSmooth {
+          from {
+            stroke-dashoffset: 28;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+        @keyframes linearPulseTrack {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        .flow-dash-line {
+          stroke-dasharray: 6 8;
+          animation: flowDashSmooth 2.4s linear infinite;
+          will-change: stroke-dashoffset;
+        }
+        .linear-pulse-beam {
+          animation: linearPulseTrack 2.6s linear infinite;
+          will-change: transform;
+        }
+      `}</style>
+
+      {/* Subtle background ambient lens glow */}
       <div
-        aria-hidden
-        className='pointer-events-none absolute inset-0 -z-10 flex items-center justify-center opacity-30 dark:opacity-20'
+        aria-hidden='true'
+        className='pointer-events-none absolute inset-0 -z-10 flex items-center justify-center opacity-25 dark:opacity-15'
       >
-        <div className='h-96 w-[600px] rounded-full bg-radial from-neutral-400/10 via-neutral-500/5 to-transparent blur-3xl dark:from-white/5 dark:via-neutral-600/5' />
+        <div className='h-96 w-[720px] rounded-full bg-radial from-emerald-500/15 via-neutral-500/5 to-transparent blur-3xl' />
       </div>
 
       <div className='mx-auto max-w-6xl px-6'>
-        {/* Header */}
+        {/* Header: Professional, high-availability & concurrency focus */}
         <AnimateInView className='mb-12 text-center'>
-          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3 py-1 text-xs font-medium text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 shadow-xs'>
-            <Activity className='size-3.5 text-neutral-600 dark:text-neutral-400 animate-pulse' />
-            <span>{t('Zero-Downtime Smart Routing Topology')}</span>
+          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3.5 py-1 text-xs font-medium text-neutral-800 shadow-xs dark:border-white/10 dark:bg-white/5 dark:text-neutral-300'>
+            <ShieldCheck className='size-3.5 text-emerald-600 dark:text-emerald-400' />
+            <span>{t('Smart Multi-Route Failover • Always Connected')}</span>
           </div>
-          <h2 className='text-2xl font-bold tracking-tight text-foreground md:text-3xl'>
-            {t('Live Gateway Relay & Automatic Failover Engine')}
+          <h2 className='text-foreground text-2xl font-bold tracking-tight md:text-3xl'>
+            {t('Multi-Account Smart Failover: Seamless AI Requests That Never Drop')}
           </h2>
-          <p className='mx-auto mt-2 max-w-2xl text-sm text-muted-foreground/80 md:text-base'>
+          <p className='text-muted-foreground/90 mx-auto mt-3 max-w-2xl text-sm leading-relaxed md:text-base'>
             {t(
-              'Requests from terminal CLIs, IDEs, and backend services are intelligently analyzed, cached, and routed to the healthiest upstream endpoint with zero latency penalty.'
+              'Multiple upstream accounts run actively in parallel. If any account encounters rate limits or network issues, its route is instantly severed and traffic seamlessly shifts to healthy accounts without interruption.'
             )}
           </p>
         </AnimateInView>
 
-        {/* Interactive Visualizer Canvas */}
-        <div className='relative rounded-3xl border border-border/60 bg-card/60 p-6 md:p-10 backdrop-blur-md shadow-xl dark:bg-card/30'>
-          {/* Top Control Bar */}
-          <div className='flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-6'>
-            <div className='flex items-center gap-3'>
-              <div className='flex size-3 relative'>
+        {/* Visualizer Canvas Frame: Consistent, stable, no visual layout fragmentation */}
+        <div className='border-border/60 bg-card/60 dark:bg-card/30 relative overflow-hidden rounded-3xl border p-6 shadow-xl backdrop-blur-md md:p-8 lg:p-10'>
+          {/* Continuous Penetrating Flow Guideline (Through the entire component width) */}
+          <div
+            aria-hidden='true'
+            className='pointer-events-none absolute -left-12 -right-12 top-1/2 -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent dark:via-emerald-500/10'
+          />
+
+          {/* Top Control Bar: Stable layout, fixed text, smooth toggle switch */}
+          <div className='border-border/40 relative z-10 flex flex-wrap items-center justify-between gap-4 border-b pb-6'>
+            <div className='flex items-center gap-2.5'>
+              <div className='relative flex size-2.5'>
                 <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75' />
-                <span className='relative inline-flex size-3 rounded-full bg-emerald-500' />
+                <span className='relative inline-flex size-2.5 rounded-full bg-emerald-500' />
               </div>
-              <span className='text-xs font-semibold uppercase tracking-wider text-foreground'>
-                {t('Live Gateway Stream')}
-              </span>
-              <span className='text-xs font-mono text-muted-foreground'>
-                {t('Processed')}: <span className='text-foreground font-bold'>{requestCount.toLocaleString()}</span> reqs
+              <span className='text-foreground text-xs font-semibold tracking-wider uppercase'>
+                {t('Multiple Upstream Channels Running Concurrently')}
               </span>
             </div>
 
-            {/* Interactive Failover Simulator Button with stable dimensions */}
+            {/* Interactive Failover Simulator: Stable switch, zero layout jumps */}
             <button
               type='button'
               onClick={() => setFailoverActive(!failoverActive)}
-              className={cn(
-                'inline-flex min-w-[260px] h-9 items-center justify-center gap-2 rounded-xl px-4 text-xs font-medium transition-all shadow-xs cursor-pointer select-none',
-                failoverActive
-                  ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40 hover:bg-amber-500/30'
-                  : 'bg-muted hover:bg-muted/80 text-foreground border border-border/60'
-              )}
+              className='inline-flex h-9 items-center justify-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/80 cursor-pointer select-none'
+              title={t('Simulate Failure')}
             >
-              <RefreshCw className={cn('size-3.5 shrink-0', failoverActive && 'animate-spin text-amber-500')} />
-              <span className='truncate'>
-                {failoverActive ? t('Simulating Primary Outage (Auto-Rerouted)') : t('Test Auto Failover Reroute')}
+              <span className='text-muted-foreground text-xs font-medium'>
+                {t('Simulate Failure')}
               </span>
+              <div
+                className={cn(
+                  'relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-300',
+                  failoverActive ? 'bg-amber-500' : 'bg-neutral-300 dark:bg-neutral-700'
+                )}
+              >
+                <span
+                  className={cn(
+                    'size-3 rounded-full bg-white transition-transform duration-300 shadow-xs',
+                    failoverActive ? 'translate-x-3.5' : 'translate-x-0.5'
+                  )}
+                />
+              </div>
             </button>
           </div>
 
-          {/* Flow Diagram: Three Columns (Clients -> New API Hub -> Upstreams) */}
-          <div className='mt-8 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-center'>
-            {/* Left: Client Sources (3 cols) */}
+          {/* Main 3-Stage Pipeline: Stable structure, never mutates on simulation */}
+          <div className='relative z-10 mt-8 grid grid-cols-1 items-center gap-6 lg:grid-cols-12'>
+            {/* Stage 1: Client Dev Tools (3 cols) */}
             <div className='space-y-3 lg:col-span-3'>
-              <span className='text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 block mb-2'>
-                {t('Client Sources')}
-              </span>
+              <div className='mb-2 flex items-center justify-between'>
+                <span className='text-muted-foreground/80 text-xs font-bold tracking-wider uppercase'>
+                  {t('1. Your Apps & Tools')}
+                </span>
+                <span className='inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400'>
+                  <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
+                  {t('Continuous Requests')}
+                </span>
+              </div>
+
               {[
-                { name: 'Claude Code CLI', icon: 'Claude.Color', sub: 'Terminal Agent' },
-                { name: 'Cursor / Aider IDE', icon: 'Cursor', sub: 'Pair Programming' },
-                { name: 'Python / Go SDK', icon: 'OpenAI', sub: 'Backend Microservices' },
+                {
+                  name: 'Cursor',
+                  icon: 'Cursor',
+                  sub: 'AI Code Editor',
+                },
+                {
+                  name: 'Claude Code',
+                  icon: 'Claude.Color',
+                  sub: 'Terminal Agent',
+                },
+                {
+                  name: 'API / SDK',
+                  icon: 'OpenAI',
+                  sub: 'Enterprise Systems',
+                },
               ].map((client, i) => (
                 <div
                   key={client.name}
                   className={cn(
-                    'flex h-[66px] items-center justify-between rounded-xl border px-3.5 transition-all duration-300',
-                    activeRouteIndex === i
-                      ? 'border-neutral-400 bg-neutral-200/60 shadow-sm dark:border-neutral-600 dark:bg-white/10'
+                    'flex h-[58px] items-center justify-between rounded-xl border px-3.5 transition-all duration-300',
+                    activeClientIndex === i
+                      ? 'border-emerald-500/50 bg-emerald-500/5 shadow-sm dark:border-emerald-500/40'
                       : 'border-border/50 bg-muted/20 hover:border-border'
                   )}
                 >
-                  <div className='flex items-center gap-2.5'>
-                    <div className='flex size-6 shrink-0 items-center justify-center'>
+                  <div className='flex min-w-0 items-center gap-2.5'>
+                    <div className='border-border/40 bg-card flex size-8 shrink-0 items-center justify-center rounded-lg border'>
                       {getLobeIcon(client.icon, 18)}
                     </div>
-                    <div>
-                      <div className='text-xs font-semibold text-foreground'>{client.name}</div>
-                      <div className='text-[10px] text-muted-foreground'>{client.sub}</div>
+                    <div className='min-w-0'>
+                      <div className='text-foreground truncate text-xs font-semibold'>
+                        {client.name}
+                      </div>
+                      <div className='text-muted-foreground truncate text-[10.5px]'>
+                        {client.sub}
+                      </div>
                     </div>
                   </div>
-                  <span className='size-1.5 shrink-0 rounded-full bg-neutral-500 dark:bg-neutral-300 animate-pulse' />
+                  <span
+                    className={cn(
+                      'size-2 shrink-0 rounded-full transition-all duration-300',
+                      activeClientIndex === i
+                        ? 'bg-emerald-500 shadow-xs shadow-emerald-500 scale-110'
+                        : 'bg-muted-foreground/30'
+                    )}
+                  />
                 </div>
               ))}
             </div>
 
-            {/* Center: New API Gateway Core (5 cols) */}
-            <div className='relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-border/80 bg-gradient-to-b from-muted/30 via-muted/10 to-transparent text-center lg:col-span-6 shadow-lg shadow-black/5 dark:border-white/15 dark:from-white/5 dark:via-transparent'>
-              <div className='relative mb-4'>
-                {/* Glowing subtle ripple */}
-                <div className='absolute -inset-2 rounded-2xl bg-neutral-400/20 blur-md animate-pulse dark:bg-white/10' />
-                <div className='relative flex size-16 items-center justify-center rounded-2xl border border-border/80 bg-background text-foreground shadow-md'>
-                  <Cpu className='size-8 animate-pulse text-neutral-800 dark:text-neutral-200' />
+            {/* Stream Connector 1: Dev Tools -> Center Hub */}
+            <div className='flex flex-col items-center justify-center py-2 lg:col-span-1 lg:py-0'>
+              <div className='hidden w-full flex-col items-center justify-center gap-1.5 lg:flex'>
+                <div className='relative h-1 w-full overflow-hidden rounded-full bg-neutral-200/90 dark:bg-neutral-800/90 shadow-inner'>
+                  <div className='linear-pulse-beam absolute inset-y-0 w-24 rounded-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]' />
+                </div>
+                <ArrowRight className='size-3 text-emerald-600 dark:text-emerald-400 opacity-80' />
+              </div>
+              <div className='flex w-full flex-col items-center justify-center gap-1 py-2 lg:hidden'>
+                <div className='relative h-8 w-1 overflow-hidden rounded-full bg-neutral-200/90 dark:bg-neutral-800/90 shadow-inner'>
+                  <div className='linear-pulse-beam absolute inset-x-0 h-8 rounded-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]' />
+                </div>
+                <ArrowDown className='size-3 text-emerald-600 dark:text-emerald-400 opacity-80' />
+              </div>
+            </div>
+
+            {/* Stage 2: API Smart Routing Hub (Stable, serene, no layout or text jumps) */}
+            <div className='border-border/80 from-muted/30 via-muted/10 relative flex flex-col items-center justify-center rounded-2xl border-2 bg-gradient-to-b to-transparent p-6 text-center shadow-lg lg:col-span-4 dark:border-white/15 dark:from-white/5 dark:via-transparent'>
+              <div className='relative mb-3'>
+                <div className='absolute -inset-2.5 rounded-2xl bg-emerald-400/20 blur-md dark:bg-emerald-400/15' />
+                <div className='border-border/80 bg-background text-foreground relative flex size-14 items-center justify-center rounded-2xl border shadow-md'>
+                  <Cpu className='size-7 text-emerald-500' />
                 </div>
               </div>
 
-              <h3 className='text-lg font-bold text-foreground'>New API Enterprise Core</h3>
-              <p className='mt-1 text-xs text-muted-foreground max-w-xs'>
-                {t('Dynamic Weight Load Balancer • Token Normalizer • ASVS Guard')}
+              <h3 className='text-foreground text-base font-bold'>
+                {t('API Smart Routing Hub')}
+              </h3>
+              <p className='text-muted-foreground mt-1 max-w-xs text-xs leading-relaxed'>
+                {t('Parallel Concurrency Pooling • Instant Auto Failover')}
               </p>
 
-              {/* Status pills inside Hub */}
-              <div className='mt-4 flex flex-wrap justify-center gap-2 text-[11px] font-mono'>
-                <span className='rounded-md bg-background/80 px-2.5 py-1 border border-border/50 text-emerald-600 dark:text-emerald-400 font-medium'>
-                  Latency: 1.8ms
+              {/* Stable status badge (Never jumps or changes height) */}
+              <div className='border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mt-3.5 flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium'>
+                <CheckCircle2 className='size-3.5 shrink-0 text-emerald-500' />
+                <span>{t('Active-Active Concurrency Pooling')}</span>
+              </div>
+
+              {/* Feature Capability Tags */}
+              <div className='mt-3 flex flex-wrap justify-center gap-1.5 text-[10px]'>
+                <span className='bg-background/80 border-border/50 text-muted-foreground rounded-md border px-2 py-0.5'>
+                  {t('Active-Active Concurrency')}
                 </span>
-                <span className='rounded-md bg-background/80 px-2.5 py-1 border border-border/50 text-neutral-700 dark:text-neutral-300 font-medium'>
-                  SSE Stream: Zero-Drop
+                <span className='bg-background/80 border-border/50 text-muted-foreground rounded-md border px-2 py-0.5'>
+                  {t('Auto Circuit Breaker')}
                 </span>
-                <span className='rounded-md bg-background/80 px-2.5 py-1 border border-border/50 text-neutral-700 dark:text-neutral-300 font-medium'>
-                  Multi-DB & Redis Sync
+                <span className='bg-background/80 border-border/50 text-muted-foreground rounded-md border px-2 py-0.5'>
+                  {t('Zero Request Loss')}
                 </span>
               </div>
             </div>
 
-            {/* Right: Upstream Destinations (3 cols) - Locked heights to prevent layout jitter */}
-            <div className='space-y-3 lg:col-span-3'>
-              <div className='flex items-center justify-between mb-2'>
-                <span className='text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70'>
-                  {t('Upstream Channel Pool')}
+            {/* Stream Connector 2: Hub -> 4 Channels (Simulation lives here on the lines!) */}
+            <div className='relative flex h-full items-center justify-center py-2 lg:col-span-1 lg:py-0'>
+              {/* Desktop 4-Branching Fine SVG Curves */}
+              <div className='hidden h-[260px] w-full items-center justify-center lg:flex'>
+                <svg
+                  className='h-full w-full overflow-visible'
+                  viewBox='0 0 100 200'
+                  preserveAspectRatio='none'
+                  fill='none'
+                >
+                  {/* Channel 1 Path (to y=25) — Disconnects and stops flow during failover */}
+                  <path
+                    d='M 0,100 C 40,100 60,25 100,25'
+                    stroke='currentColor'
+                    className='text-neutral-200 dark:text-neutral-800'
+                    strokeWidth='1.5'
+                  />
+                  <path
+                    d='M 0,100 C 40,100 60,25 100,25'
+                    stroke={failoverActive ? '#ef4444' : '#10b981'}
+                    strokeWidth={failoverActive ? '1' : '1.8'}
+                    strokeDasharray={failoverActive ? '2 6' : '6 8'}
+                    className={cn(
+                      'transition-all duration-500',
+                      failoverActive
+                        ? 'opacity-20'
+                        : 'flow-dash-line drop-shadow-[0_0_3px_rgba(16,185,129,0.8)]'
+                    )}
+                  />
+
+                  {/* Channel 2 Path (to y=75) — Continuous smooth flow */}
+                  <path
+                    d='M 0,100 C 40,100 60,75 100,75'
+                    stroke='currentColor'
+                    className='text-neutral-200 dark:text-neutral-800'
+                    strokeWidth='1.5'
+                  />
+                  <path
+                    d='M 0,100 C 40,100 60,75 100,75'
+                    stroke='#10b981'
+                    strokeWidth='1.8'
+                    className='flow-dash-line drop-shadow-[0_0_3px_rgba(16,185,129,0.8)]'
+                  />
+
+                  {/* Channel 3 Path (to y=125) — Continuous smooth flow */}
+                  <path
+                    d='M 0,100 C 40,100 60,125 100,125'
+                    stroke='currentColor'
+                    className='text-neutral-200 dark:text-neutral-800'
+                    strokeWidth='1.5'
+                  />
+                  <path
+                    d='M 0,100 C 40,100 60,125 100,125'
+                    stroke='#10b981'
+                    strokeWidth='1.8'
+                    className='flow-dash-line drop-shadow-[0_0_3px_rgba(16,185,129,0.8)]'
+                  />
+
+                  {/* Channel 4 Path (to y=175) — Continuous smooth flow */}
+                  <path
+                    d='M 0,100 C 40,100 60,175 100,175'
+                    stroke='currentColor'
+                    className='text-neutral-200 dark:text-neutral-800'
+                    strokeWidth='1.5'
+                  />
+                  <path
+                    d='M 0,100 C 40,100 60,175 100,175'
+                    stroke='#10b981'
+                    strokeWidth='1.8'
+                    className='flow-dash-line drop-shadow-[0_0_3px_rgba(16,185,129,0.8)]'
+                  />
+                </svg>
+              </div>
+
+              {/* Mobile vertical conduit */}
+              <div className='flex w-full flex-col items-center justify-center gap-1 py-2 lg:hidden'>
+                <div className='relative h-8 w-1 overflow-hidden rounded-full bg-neutral-200/90 dark:bg-neutral-800/90 shadow-inner'>
+                  <div className='linear-pulse-beam absolute inset-x-0 h-8 rounded-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]' />
+                </div>
+                <ArrowDown className='size-3 text-emerald-600 dark:text-emerald-400 opacity-80' />
+              </div>
+            </div>
+
+            {/* Stage 3: Upstream Multi-Account Pool (Stable, elegant cards with zero layout jumping) */}
+            <div className='space-y-2.5 lg:col-span-3'>
+              <div className='mb-2 flex items-center justify-between'>
+                <span className='text-muted-foreground/80 text-xs font-bold tracking-wider uppercase'>
+                  {t('Multi-Account Upstream Pool')}
                 </span>
-                <span className='rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground'>
-                  Target: gpt-4o
+                <span className='border-border/60 bg-muted/40 text-muted-foreground rounded-full border px-2 py-0.5 text-[10px] font-medium'>
+                  {t('Multiple Upstream Channels Running Concurrently')}
                 </span>
               </div>
 
-              {/* Channel 1: Primary OpenAI Direct */}
-              <div
-                className={cn(
-                  'flex h-[66px] items-center justify-between rounded-xl border px-3.5 transition-all duration-300',
-                  failoverActive
-                    ? 'border-red-500/40 bg-red-500/10 opacity-70'
-                    : 'border-emerald-500/40 bg-emerald-500/5'
-                )}
-              >
-                <div className='flex items-center gap-2.5 min-w-0'>
-                  <div className='flex size-6 shrink-0 items-center justify-center'>
-                    {getLobeIcon('OpenAI', 18)}
+              {/* Channel 1: GPT Pro 20X - 01 */}
+              <div className='relative group'>
+                <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
+                  <div className='flex min-w-0 items-center gap-2.5'>
+                    <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
+                      {getLobeIcon('OpenAI', 16)}
+                    </div>
+                    <div className='min-w-0'>
+                      <div className='text-foreground truncate text-xs font-semibold'>
+                        GPT Pro 20X - 01
+                      </div>
+                      <div className='text-muted-foreground truncate text-[10px]'>
+                        {t('Smooth & Connected')}
+                      </div>
+                    </div>
                   </div>
-                  <div className='min-w-0'>
-                    <div className='text-xs font-semibold text-foreground truncate'>OpenAI Direct (US-East)</div>
-                    <div className='text-[10px] text-muted-foreground truncate'>{t('Primary Upstream Route')}</div>
+                  <div className='flex items-center gap-1.5 shrink-0'>
+                    <span
+                      className={cn(
+                        'size-2 rounded-full transition-colors duration-500',
+                        failoverActive
+                          ? 'bg-neutral-400/60 dark:bg-neutral-600'
+                          : 'bg-emerald-500 shadow-xs shadow-emerald-500'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'rounded px-2 py-0.5 text-[10px] font-medium transition-colors duration-500',
+                        failoverActive
+                          ? 'bg-neutral-200/80 text-neutral-600 dark:bg-white/10 dark:text-neutral-400'
+                          : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold'
+                      )}
+                    >
+                      {failoverActive ? t('Cutoff') : t('Active')}
+                    </span>
                   </div>
                 </div>
-                <div className='flex h-6 min-w-[95px] shrink-0 items-center justify-end font-mono text-[10px]'>
-                  {failoverActive ? (
-                    <span className='rounded bg-red-500/15 px-2 py-0.5 font-bold text-red-500'>
-                      429 RateLimit
-                    </span>
-                  ) : (
-                    <span className='font-bold text-emerald-500'>
-                      38ms • Active
-                    </span>
+                {/* Right-extending fine laser trail */}
+                <div
+                  aria-hidden='true'
+                  className={cn(
+                    'pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block transition-opacity duration-500',
+                    failoverActive
+                      ? 'opacity-20 bg-neutral-400'
+                      : 'bg-gradient-to-r from-emerald-500/50 to-transparent'
                   )}
-                </div>
+                />
               </div>
 
-              {/* Channel 2: Hot Standby Target - Azure OpenAI */}
-              <div
-                className={cn(
-                  'flex h-[66px] items-center justify-between rounded-xl border px-3.5 transition-all duration-300',
-                  failoverActive
-                    ? 'border-emerald-500/60 bg-emerald-500/15 shadow-md shadow-emerald-500/10'
-                    : 'border-border/50 bg-muted/20'
-                )}
-              >
-                <div className='flex items-center gap-2.5 min-w-0'>
-                  <div className='flex size-6 shrink-0 items-center justify-center'>
-                    {getLobeIcon('Azure.Color', 18)}
+              {/* Channel 2: GPT Pro 20X - 02 */}
+              <div className='relative group'>
+                <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
+                  <div className='flex min-w-0 items-center gap-2.5'>
+                    <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
+                      {getLobeIcon('OpenAI', 16)}
+                    </div>
+                    <div className='min-w-0'>
+                      <div className='text-foreground truncate text-xs font-semibold'>
+                        GPT Pro 20X - 02
+                      </div>
+                      <div className='text-muted-foreground truncate text-[10px]'>
+                        {t('Smooth & Connected')}
+                      </div>
+                    </div>
                   </div>
-                  <div className='min-w-0'>
-                    <div className='text-xs font-semibold text-foreground truncate'>Azure OpenAI Service</div>
-                    <div className='text-[10px] text-muted-foreground truncate'>{t('Same-Model Hot Standby')}</div>
+                  <div className='flex items-center gap-1.5 shrink-0'>
+                    <span className='size-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500' />
+                    <span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
+                      {t('Active')}
+                    </span>
                   </div>
                 </div>
-                <div className='flex h-6 min-w-[95px] shrink-0 items-center justify-end font-mono text-[10px]'>
-                  {failoverActive ? (
-                    <span className='rounded bg-emerald-500/20 px-2 py-0.5 font-bold text-emerald-500 dark:text-emerald-400'>
-                      REROUTED (1.2ms)
-                    </span>
-                  ) : (
-                    <span className='rounded bg-neutral-200/50 dark:bg-white/5 px-2 py-0.5 text-muted-foreground'>
-                      Standby
-                    </span>
-                  )}
-                </div>
+                <div
+                  aria-hidden='true'
+                  className='pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block bg-gradient-to-r from-emerald-500/50 to-transparent'
+                />
               </div>
 
-              {/* Channel 3: AWS Bedrock Relay */}
-              <div className='flex h-[66px] items-center justify-between rounded-xl border border-border/50 bg-muted/20 px-3.5'>
-                <div className='flex items-center gap-2.5 min-w-0'>
-                  <div className='flex size-6 shrink-0 items-center justify-center'>
-                    {getLobeIcon('Aws.Color', 18)}
+              {/* Channel 3: GPT Pro 20X - 03 */}
+              <div className='relative group'>
+                <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
+                  <div className='flex min-w-0 items-center gap-2.5'>
+                    <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
+                      {getLobeIcon('OpenAI', 16)}
+                    </div>
+                    <div className='min-w-0'>
+                      <div className='text-foreground truncate text-xs font-semibold'>
+                        GPT Pro 20X - 03
+                      </div>
+                      <div className='text-muted-foreground truncate text-[10px]'>
+                        {t('Smooth & Connected')}
+                      </div>
+                    </div>
                   </div>
-                  <div className='min-w-0'>
-                    <div className='text-xs font-semibold text-foreground truncate'>AWS Bedrock Relay</div>
-                    <div className='text-[10px] text-muted-foreground truncate'>{t('Multi-Region Disaster Recovery')}</div>
+                  <div className='flex items-center gap-1.5 shrink-0'>
+                    <span className='size-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500' />
+                    <span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
+                      {t('Active')}
+                    </span>
                   </div>
                 </div>
-                <div className='flex h-6 min-w-[95px] shrink-0 items-center justify-end font-mono text-[10px]'>
-                  <span className='rounded bg-neutral-200/50 dark:bg-white/5 px-2 py-0.5 text-muted-foreground'>
-                    Standby
-                  </span>
+                <div
+                  aria-hidden='true'
+                  className='pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block bg-gradient-to-r from-emerald-500/50 to-transparent'
+                />
+              </div>
+
+              {/* Channel 4: 微软云 Azure */}
+              <div className='relative group'>
+                <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
+                  <div className='flex min-w-0 items-center gap-2.5'>
+                    <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
+                      {getLobeIcon('Azure.Color', 16)}
+                    </div>
+                    <div className='min-w-0'>
+                      <div className='text-foreground truncate text-xs font-semibold'>
+                        {t('Microsoft Azure Cloud')}
+                      </div>
+                      <div className='text-muted-foreground truncate text-[10px]'>
+                        {t('Smooth & Connected')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-1.5 shrink-0'>
+                    <span className='size-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500' />
+                    <span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
+                      {t('Active')}
+                    </span>
+                  </div>
                 </div>
+                <div
+                  aria-hidden='true'
+                  className='pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block bg-gradient-to-r from-emerald-500/50 to-transparent'
+                />
               </div>
             </div>
-          </div>
-
-          {/* Bottom Live Notice: Locked min-height to prevent vertical layout shifts */}
-          <div className='mt-8 flex min-h-[52px] flex-wrap items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/20 p-3.5 text-xs'>
-            <div className='flex items-center gap-2 flex-1 min-w-[260px]'>
-              <CheckCircle2 className='size-4 text-emerald-500 shrink-0' />
-              <span className='text-foreground font-medium'>
-                {failoverActive
-                  ? t('Primary channel 429 anomaly detected: Gateway rerouted to same-model Azure backup channel in 1.2ms with zero client errors.')
-                  : t('All upstream channels healthy. Load distributed dynamically across configured weight ratios.')}
-              </span>
-            </div>
-            <span className='font-mono text-muted-foreground text-[11px] shrink-0'>
-              SLO: 99.999% • Packet Loss: 0.00%
-            </span>
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Pause, Play, Sparkles, Zap } from 'lucide-react'
+import { Pause, Play, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -38,7 +38,8 @@ export function HeroCliShowcase({ className }: { className?: string }) {
   const { t } = useTranslation()
   const prefersReduced = useReducedMotion()
   const [activeIndex, setActiveIndex] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const cliProfiles: CliProfile[] = [
     {
@@ -46,7 +47,8 @@ export function HeroCliShowcase({ className }: { className?: string }) {
       name: 'Claude Code',
       tag: 'Anthropic Agent',
       icon: 'Claude.Color',
-      command: 'claude "Audit security middleware & optimize database row-locks"',
+      command:
+        'export ANTHROPIC_BASE_URL="https://tokenmetro.com/v1" && export ANTHROPIC_API_KEY="sk-metro-token" && claude',
       renderOutput: () => (
         <div className='space-y-3.5 text-[13.5px] leading-relaxed font-mono'>
           <div className='flex items-center justify-between text-neutral-700 dark:text-neutral-300'>
@@ -56,59 +58,66 @@ export function HeroCliShowcase({ className }: { className?: string }) {
                 Agent Mode
               </span>
             </div>
-            <span className='text-xs text-neutral-500 dark:text-neutral-400'>Channel: AWS Bedrock</span>
+            <span className='text-xs text-neutral-500 dark:text-neutral-400'>Dispatch: OpenAI Official Direct</span>
           </div>
           <div className='border-l-2 border-neutral-300 pl-4 space-y-2.5 text-neutral-700 dark:border-neutral-700/60 dark:text-neutral-300'>
             <div className='flex items-center gap-2 text-neutral-800 dark:text-neutral-200'>
               <span className='text-emerald-500 dark:text-emerald-400'>●</span>
               <span>
-                Connected to <span className='font-semibold text-neutral-900 dark:text-white'>New API Gateway</span>{' '}
-                <span className='text-neutral-500 dark:text-neutral-400'>via /v1/messages</span>
+                Endpoint:{' '}
+                <span className='font-semibold text-neutral-900 dark:text-white'>
+                  https://tokenmetro.com/v1
+                </span>
+              </span>
+            </div>
+            <div className='flex items-center gap-2 text-neutral-800 dark:text-neutral-200'>
+              <span className='text-emerald-500 dark:text-emerald-400'>●</span>
+              <span>
+                API Key Token:{' '}
+                <code className='rounded bg-neutral-200/80 px-1.5 py-0.5 text-neutral-800 dark:bg-white/10 dark:text-neutral-200'>
+                  sk-metro-••••••••
+                </code>{' '}
+                <span className='text-xs text-emerald-600 dark:text-emerald-400'>✔ Verified</span>
               </span>
             </div>
             <div className='flex items-center gap-2 text-neutral-600 dark:text-neutral-400'>
-              <span className='animate-pulse text-neutral-500 dark:text-neutral-400'>◆</span>
-              <span>Inspecting middleware/auth.go & service/quota.go (640 lines)...</span>
-            </div>
-            <div className='rounded-lg border border-emerald-500/30 bg-emerald-50/90 p-3 text-[12px] text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300'>
-              ✔ Verified ASVS Level 2 compliance: Session invalidation and token hashing
-            </div>
-            <div className='flex items-center gap-2 text-neutral-800 dark:text-neutral-200'>
-              <span className='text-emerald-600 dark:text-emerald-400'>✔</span>
+              <span className='animate-pulse text-emerald-500 dark:text-emerald-400'>◆</span>
               <span>
-                Applied row-lock patch: replaced GORM query option with{' '}
-                <code className='rounded bg-neutral-200/80 px-1.5 py-0.5 text-neutral-800 dark:bg-white/10 dark:text-neutral-200'>
-                  lockForUpdate(tx)
-                </code>
+                Upstream Dispatch:{' '}
+                <span className='font-semibold text-neutral-900 dark:text-white'>OpenAI Official Direct</span>{' '}
+                (Protocol translation active)
               </span>
             </div>
+            <div className='rounded-lg border border-emerald-500/30 bg-emerald-50/90 p-3 text-[12px] text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300'>
+              ✔ Executing Current Test Suite: 36/36 integration tests passed (100% success rate)
+            </div>
             <div className='rounded-lg border border-neutral-200 bg-neutral-100/80 p-2.5 text-[12px] text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-300'>
-              <span className='font-semibold text-neutral-900 dark:text-white'>Tests:</span> 28/28 passed • 0 security warnings • SQLite & PostgreSQL verified
+              <span className='font-semibold text-neutral-900 dark:text-white'>Test Suite:</span> e2e_gateway_auth_test • 0 errors • SSE streaming verified
             </div>
             <div className='flex items-center justify-between pt-1.5 text-[12px] text-neutral-600 dark:text-neutral-400 border-t border-neutral-200/70 dark:border-neutral-800/70'>
-              <span>Tokens: 1,420 in / 380 out • Cache Hit: 92%</span>
-              <span className='font-semibold text-emerald-600 dark:text-emerald-400'>Speed: 68.4 tok/s • Cost: $0.0028</span>
+              <span>Tokens: 1,680 in / 420 out • Cache Hit: 95%</span>
+              <span className='font-semibold text-emerald-600 dark:text-emerald-400'>Speed: 76.8 tok/s • Latency: 21ms</span>
             </div>
           </div>
         </div>
       ),
     },
     {
-      id: 'cursor-aider',
-      name: 'Cursor & Aider',
-      tag: 'Pair Programming',
-      icon: 'DeepSeek.Color',
-      command: 'aider --model deepseek/deepseek-r1 --stream',
+      id: 'cursor',
+      name: 'Cursor',
+      tag: 'AI Code Editor',
+      icon: 'Cursor',
+      command: 'cursor --model deepseek --stream "Implement overflow-safe quota math"',
       renderOutput: () => (
         <div className='space-y-3.5 text-[13.5px] leading-relaxed font-mono'>
           <div className='flex items-center justify-between text-neutral-700 dark:text-neutral-300'>
-            <span className='font-semibold text-neutral-800 dark:text-neutral-200'>aider • git: main*</span>
+            <span className='font-semibold text-neutral-800 dark:text-neutral-200'>cursor • git: main*</span>
             <span className='font-mono text-xs text-neutral-500 dark:text-neutral-400'>Gateway Latency: 18ms</span>
           </div>
           <div className='space-y-2.5 text-neutral-800 dark:text-neutral-200'>
             <div className='flex items-center justify-between text-neutral-600 dark:text-neutral-400'>
               <span>
-                Model: <span className='font-semibold text-neutral-900 dark:text-white'>DeepSeek Cluster</span> via New API Dynamic LB
+                Model: <span className='font-semibold text-neutral-900 dark:text-white'>DeepSeek</span> via Dynamic LB
               </span>
               <span className='text-[11px] text-emerald-600 dark:text-emerald-400'>HTTP/2 Active</span>
             </div>
@@ -137,39 +146,55 @@ export function HeroCliShowcase({ className }: { className?: string }) {
     {
       id: 'openai-cli',
       name: 'OpenAI CLI',
-      tag: 'Standard SDK',
+      tag: 'GPT Pro 20X',
       icon: 'OpenAI',
-      command: 'openai api chat.completions.create -m gpt-4o --stream',
+      command:
+        'export OPENAI_BASE_URL="https://api.openai.com/v1" && openai api chat.completions.create -m gpt-6-astra --stream',
       renderOutput: () => (
         <div className='space-y-3.5 text-[13.5px] leading-relaxed font-mono'>
           <div className='flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400'>
-            <span className='font-bold text-emerald-600 dark:text-emerald-400'>HTTP/2 200 OK • SSE Stream</span>
-            <span className='rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-600 dark:text-emerald-400'>
-              chunk_delay: 8ms
-            </span>
+            <div className='flex items-center gap-2'>
+              <span className='font-bold text-emerald-600 dark:text-emerald-400'>HTTP/2 200 OK • SSE Stream</span>
+              <span className='rounded bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-600 dark:text-emerald-400'>
+                GPT Pro 20X Dedicated
+              </span>
+            </div>
+            <div className='flex items-center gap-1 rounded bg-neutral-200/80 px-2 py-0.5 text-[10.5px] font-medium text-neutral-700 dark:bg-white/10 dark:text-neutral-300'>
+              <ShieldCheck className='size-3 text-emerald-600 dark:text-emerald-400' />
+              <span>Ultra-High Stability SLA 99.99%</span>
+            </div>
           </div>
           <div className='space-y-2.5 text-neutral-800 dark:text-neutral-200'>
             <div className='space-y-1 text-xs text-neutral-500 dark:text-neutral-400'>
-              <div>{`> data: {"id":"chatcmpl-9A","model":"gpt-4o","choices":[{"delta":{"content":"Architecting"}}]}`}</div>
-              <div>{`> data: {"id":"chatcmpl-9A","model":"gpt-4o","choices":[{"delta":{"content":" resilient AI systems"}}]}`}</div>
+              <div className='flex items-center gap-2 text-neutral-800 dark:text-neutral-200'>
+                <span className='text-emerald-500 dark:text-emerald-400'>●</span>
+                <span>
+                  Official Endpoint:{' '}
+                  <span className='font-semibold text-neutral-900 dark:text-white'>
+                    https://api.openai.com/v1
+                  </span>
+                </span>
+              </div>
+              <div>{`> data: {"id":"chatcmpl-9A","model":"gpt-6-astra","choices":[{"delta":{"content":"Architecting"}}]}`}</div>
+              <div>{`> data: {"id":"chatcmpl-9A","model":"gpt-6-astra","choices":[{"delta":{"content":" rock-solid enterprise stability"}}]}`}</div>
             </div>
             <div className='rounded-lg border border-neutral-200 bg-neutral-100/70 p-3 text-[12.5px] leading-relaxed text-neutral-700 dark:border-neutral-700/60 dark:bg-neutral-900/60 dark:text-neutral-300'>
-              New API routes requests seamlessly across Azure OpenAI US-East and OpenAI Direct,
-              settling quota in real time with 0 tokens lost and transparent pre-consume hold.
+              Direct official OpenAI endpoint dispatch powered by dedicated GPT Pro 20X acceleration.
+              Engineered for extreme zero-jitter stability, 20x concurrency burst endurance, and guaranteed zero-loss quota settlement.
             </div>
             <div className='grid grid-cols-2 gap-2 text-xs'>
               <div className='rounded-lg border border-neutral-200 bg-neutral-100/60 p-2 dark:border-neutral-800 dark:bg-neutral-900/40'>
-                <span className='text-[10px] text-neutral-500 dark:text-neutral-400'>Upstream RTT</span>
-                <div className='font-bold text-neutral-900 dark:text-white'>34ms • Tier 5</div>
+                <span className='text-[10px] text-neutral-500 dark:text-neutral-400'>Pipeline & Channel</span>
+                <div className='font-bold text-neutral-900 dark:text-white'>OpenAI Official • GPT Pro 20X</div>
               </div>
               <div className='rounded-lg border border-neutral-200 bg-neutral-100/60 p-2 dark:border-neutral-800 dark:bg-neutral-900/40'>
-                <span className='text-[10px] text-neutral-500 dark:text-neutral-400'>Quota Balance</span>
-                <div className='font-bold text-emerald-600 dark:text-emerald-400'>Auto Settled</div>
+                <span className='text-[10px] text-neutral-500 dark:text-neutral-400'>Stability SLA</span>
+                <div className='font-bold text-emerald-600 dark:text-emerald-400'>99.99% • 0 Jitter / 0 Drops</div>
               </div>
             </div>
             <div className='flex items-center justify-between border-t border-neutral-200 pt-2 text-[11.5px] text-neutral-600 dark:border-neutral-800/80 dark:text-neutral-400'>
-              <span>Prompt: 96 | Completion: 218</span>
-              <span className='font-semibold text-emerald-600 dark:text-emerald-400'>Cost: $0.00034 • Quota OK</span>
+              <span>Model: GPT-6 Astra • 20X Burst Pool</span>
+              <span className='font-semibold text-emerald-600 dark:text-emerald-400'>State: Ultra-Stable • Quota Verified</span>
             </div>
           </div>
         </div>
@@ -222,14 +247,14 @@ export function HeroCliShowcase({ className }: { className?: string }) {
 
   // Lightweight auto-switch with zero intermediate progress re-renders
   useEffect(() => {
-    if (prefersReduced || isPaused) return
+    if (prefersReduced || isManuallyPaused || isHovered) return
 
     const timer = setInterval(() => {
       setActiveIndex((idx) => (idx + 1) % cliProfiles.length)
     }, 6000)
 
     return () => clearInterval(timer)
-  }, [isPaused, prefersReduced, cliProfiles.length])
+  }, [isManuallyPaused, isHovered, prefersReduced, cliProfiles.length])
 
   const handleSelectTab = useCallback((index: number) => {
     setActiveIndex(index)
@@ -238,8 +263,8 @@ export function HeroCliShowcase({ className }: { className?: string }) {
   return (
     <div
       className={cn('relative w-full max-w-2xl xl:max-w-[700px] group', className)}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Subtle ambient lens glow */}
       <div
@@ -266,11 +291,15 @@ export function HeroCliShowcase({ className }: { className?: string }) {
             <div className='flex items-center gap-2.5'>
               <button
                 type='button'
-                onClick={() => setIsPaused(!isPaused)}
-                className='rounded-md p-1 text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
-                title={isPaused ? t('Resume auto-switch') : t('Pause auto-switch')}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsManuallyPaused((prev) => !prev)
+                }}
+                className='cursor-pointer rounded-md p-1 text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
+                title={isManuallyPaused ? t('Resume auto-switch') : t('Pause auto-switch')}
+                aria-label={isManuallyPaused ? t('Resume auto-switch') : t('Pause auto-switch')}
               >
-                {isPaused ? <Play className='size-3.5' /> : <Pause className='size-3.5' />}
+                {isManuallyPaused ? <Play className='size-3.5' /> : <Pause className='size-3.5' />}
               </button>
               <div className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:border-emerald-500/20 dark:text-emerald-400'>
                 <span className='size-1.5 animate-pulse rounded-full bg-emerald-500 dark:bg-emerald-400' />
@@ -354,7 +383,7 @@ export function HeroCliShowcase({ className }: { className?: string }) {
             </span>
           </div>
           <div className='flex items-center gap-3 font-mono text-xs'>
-            <span>baseURL: /v1</span>
+            <span>baseURL: https://tokenmetro.com/v1</span>
             <span className='text-neutral-400 dark:text-neutral-600'>|</span>
             <span className='font-medium text-neutral-700 dark:text-neutral-300'>{currentProfile.tag}</span>
           </div>

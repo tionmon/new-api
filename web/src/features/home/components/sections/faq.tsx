@@ -27,14 +27,18 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion'
 
-export function FAQ() {
+interface FAQProps {
+  isStandalone?: boolean
+}
+
+export function FAQ({ isStandalone }: FAQProps = {}) {
   const { t } = useTranslation()
 
   const faqs = [
     {
       q: t('What is New API and what problems does it solve?'),
       a: t(
-        'New API is a high-concurrency, enterprise-grade AI gateway proxy written in Go. It aggregates 40+ AI model vendors (OpenAI, Claude, Gemini, DeepSeek, Azure, AWS Bedrock, etc.) behind a single unified OpenAI-compatible endpoint, providing multi-channel load balancing, automatic failover, real-time token billing, and user group management.'
+        'New API is a high-concurrency, enterprise-grade AI gateway proxy written in Go. It aggregates leading AI model vendors (OpenAI, Claude, Gemini, DeepSeek, Azure, AWS Bedrock, etc.) behind a single unified OpenAI-compatible endpoint, providing multi-channel load balancing, automatic failover, real-time token billing, and user group management.'
       ),
     },
     {
@@ -70,7 +74,13 @@ export function FAQ() {
   ]
 
   return (
-    <section className='relative z-10 border-t border-border/40 bg-muted/5 px-6 py-20 md:py-28'>
+    <section
+      className={`relative z-10 px-6 ${
+        isStandalone
+          ? 'pt-28 pb-24 md:pt-36 md:pb-32'
+          : 'border-t border-border/40 bg-muted/5 py-20 md:py-28'
+      }`}
+    >
       <div className='mx-auto max-w-4xl'>
         {/* Header */}
         <AnimateInView className='mb-12 text-center'>
@@ -92,7 +102,7 @@ export function FAQ() {
         <AnimateInView animation='fade-up' className='rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur-xs shadow-xs dark:bg-card/30'>
           <Accordion className='divide-y divide-border/40'>
             {faqs.map((faq, idx) => (
-              <AccordionItem key={idx} value={`item-${idx}`} className='py-2 first:pt-0 last:pb-0'>
+              <AccordionItem key={faq.q} value={`item-${idx}`} className='py-2 first:pt-0 last:pb-0'>
                 <AccordionTrigger className='text-base font-medium hover:no-underline py-3 text-foreground hover:text-foreground/75 transition-colors'>
                   {faq.q}
                 </AccordionTrigger>

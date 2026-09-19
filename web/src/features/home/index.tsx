@@ -28,9 +28,6 @@ import { useAuthStore } from '@/stores/auth-store'
 
 import {
   CTA,
-  CodeQuickstart,
-  FAQ,
-  Features,
   GatewayFlowVisualizer,
   Hero,
   ProviderMarquee,
@@ -65,6 +62,26 @@ export function Home() {
       syncIframePreferences()
     }
   }, [isUrl, syncIframePreferences])
+
+  useEffect(() => {
+    if (!isLoaded || content) return
+    const handleHashScroll = () => {
+      const targetHash = window.location.hash.replace(/^#/, '')
+      if (targetHash) {
+        const el = document.getElementById(targetHash)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+    }
+
+    const timer = setTimeout(handleHashScroll, 120)
+    window.addEventListener('hashchange', handleHashScroll)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('hashchange', handleHashScroll)
+    }
+  }, [isLoaded, content])
 
   if (!isLoaded) {
     return (
@@ -144,9 +161,6 @@ export function Home() {
         <Hero isAuthenticated={isAuthenticated} />
         <ProviderMarquee />
         <GatewayFlowVisualizer />
-        <Features />
-        <CodeQuickstart />
-        <FAQ />
         <CTA isAuthenticated={isAuthenticated} />
         <Footer />
       </div>

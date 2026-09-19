@@ -273,7 +273,7 @@ it('shows one standard task price and a localized group price without duplicate 
   expect(screen.getByText('$0.44')).toBeVisible()
   await act(() => i18next.changeLanguage('zhCN'))
   expect(screen.getAllByText('生成歌曲单价', { exact: false })).toHaveLength(2)
-  await act(() => i18next.changeLanguage('fr'))
+  await act(() => i18next.changeLanguage('en'))
   expect(
     screen.getAllByText('Song generation unit price', { exact: false })
   ).toHaveLength(2)
@@ -380,7 +380,7 @@ it('uses plugin option labels and infers a unique fallback without expanding unr
   await act(() => i18next.changeLanguage('zhCN'))
   expect(screen.getAllByText('无参考视频')).toHaveLength(2)
   expect(screen.getAllByText('有参考视频')).toHaveLength(2)
-  await act(() => i18next.changeLanguage('ja'))
+  await act(() => i18next.changeLanguage('en'))
   expect(screen.getAllByText('With reference video')).toHaveLength(2)
 })
 

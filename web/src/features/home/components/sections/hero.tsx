@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { motion } from 'motion/react'
-import { Activity, ArrowRight, KeyRound, Terminal } from 'lucide-react'
+import { Activity, ArrowRight, ArrowUpRight, KeyRound, Terminal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -107,7 +107,7 @@ export function Hero(props: HeroProps) {
       num: '01',
       title: t('Create Unified Key'),
       desc: t(
-        'Generate standard API tokens or aggregate 40+ upstream vendor channels'
+        'Generate standard API tokens and connect leading model channels'
       ),
       icon: <KeyRound className='size-4 text-neutral-700 dark:text-neutral-300' />,
     },
@@ -182,14 +182,14 @@ export function Hero(props: HeroProps) {
             </div>
           </div>
 
-          {/* Action buttons (Only primary CTA retained per user request) */}
+          {/* Action buttons */}
           <div
             className='landing-animate-fade-up mt-8 flex flex-wrap items-center gap-3.5 opacity-0'
             style={{ animationDelay: '200ms' }}
           >
             {props.isAuthenticated ? (
               <Button
-                className='group h-12 rounded-xl px-7 text-sm font-semibold shadow-lg shadow-neutral-900/15 dark:shadow-black/40'
+                className='group h-12 rounded-xl px-7 text-sm font-semibold shadow-lg shadow-neutral-900/15 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] dark:shadow-black/40'
                 render={<Link to='/dashboard' />}
               >
                 {t('Go to Dashboard')}
@@ -197,13 +197,33 @@ export function Hero(props: HeroProps) {
               </Button>
             ) : (
               <Button
-                className='group h-12 rounded-xl px-7 text-sm font-semibold shadow-lg shadow-neutral-900/15 dark:shadow-black/40'
+                className='group h-12 rounded-xl px-7 text-sm font-semibold shadow-lg shadow-neutral-900/15 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] dark:shadow-black/40'
                 render={<Link to='/sign-up' />}
               >
                 {t('Get Started Now')}
                 <ArrowRight className='ml-2 size-4 transition-transform duration-200 group-hover:translate-x-1' />
               </Button>
             )}
+
+            {/* Service Status external link button */}
+            <Button
+              variant='outline'
+              className='group h-12 rounded-xl border-neutral-200/80 bg-background/80 px-6 text-sm font-semibold text-foreground shadow-xs backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-100/80 hover:shadow-md active:translate-y-0 active:scale-[0.98] dark:border-neutral-800 dark:bg-neutral-900/60 dark:hover:border-neutral-700 dark:hover:bg-neutral-800/80'
+              render={
+                <a
+                  href='https://status.bbql.de'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                />
+              }
+            >
+              <span className='relative mr-2 flex size-2 shrink-0'>
+                <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75 duration-1000' />
+                <span className='relative inline-flex size-2 rounded-full bg-emerald-500 transition-transform duration-200 group-hover:scale-125' />
+              </span>
+              <span>{t('Service Status')}</span>
+              <ArrowUpRight className='ml-1.5 size-4 text-muted-foreground/70 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground' />
+            </Button>
           </div>
         </div>
 

@@ -98,7 +98,6 @@ export function PublicHeader(props: PublicHeaderProps) {
   const user = auth.user
   const isAuthenticated = !!user
   const displaySiteName = customSiteName || systemName
-  const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
 
   // Curate desktop nav links in AWS console layout
   // Exclude dashboard/console from left links since it lives in the AWS right auth cluster
@@ -123,8 +122,27 @@ export function PublicHeader(props: PublicHeaderProps) {
         filtered.push(solutionsItem)
       }
     }
+
+    // Ensure "FAQ" is included if not already present
+    const hasFaq = filtered.some(
+      (l) => l.title === t('FAQ') || l.href === '/faq'
+    )
+    if (!hasFaq) {
+      const aboutIndex = filtered.findIndex((l) => l.href === '/about')
+      const faqItem: TopNavLink = {
+        title: t('FAQ'),
+        href: '/faq',
+      }
+      if (aboutIndex >= 0) {
+        filtered.splice(aboutIndex, 0, faqItem)
+      } else {
+        filtered.push(faqItem)
+      }
+    }
     return filtered
   }, [dynamicLinks, navLinks, t])
+
+  const links = desktopLinks
 
   let logoContent: ReactNode = (
     <HeaderLogo
@@ -201,8 +219,35 @@ export function PublicHeader(props: PublicHeaderProps) {
       if (closeMobile) {
         setMobileOpen(false)
       }
+
+      if (link.href.includes('#')) {
+        event.preventDefault()
+        const [path, targetHash] = link.href.split('#')
+        const targetPath = path || '/'
+        const hashId = targetHash || ''
+
+        const scrollToTarget = () => {
+          if (!hashId) return
+          const element = document.getElementById(hashId)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' })
+          }
+        }
+
+        if (pathname === targetPath) {
+          scrollToTarget()
+          window.history.pushState(null, '', link.href)
+        } else {
+          navigate({ to: targetPath as any }).then(() => {
+            window.location.hash = hashId
+            setTimeout(scrollToTarget, 100)
+            setTimeout(scrollToTarget, 300)
+            setTimeout(scrollToTarget, 600)
+          })
+        }
+      }
     },
-    [t]
+    [navigate, pathname, t]
   )
 
   return (
@@ -228,9 +273,6 @@ export function PublicHeader(props: PublicHeaderProps) {
                 title={displaySiteName}
               >
                 {loading ? <Skeleton className='h-4 w-16' /> : displaySiteName}
-              </span>
-              <span className='hidden text-[11px] font-semibold text-muted-foreground/80 md:inline-block'>
-                AI Gateway
               </span>
             </Link>
 

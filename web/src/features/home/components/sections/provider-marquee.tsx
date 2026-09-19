@@ -25,101 +25,39 @@ import { getLobeIcon } from '@/lib/lobe-icon'
 interface ProviderInfo {
   name: string
   iconName: string
-  desc: string
-  tag?: string
 }
 
 const PROVIDERS: ProviderInfo[] = [
-  {
-    name: 'OpenAI',
-    iconName: 'OpenAI',
-    desc: 'Direct API & Azure OpenAI',
-    tag: 'Direct & Azure',
-  },
-  {
-    name: 'Anthropic',
-    iconName: 'Claude.Color',
-    desc: 'Claude Direct & AWS Bedrock',
-    tag: 'Direct & Bedrock',
-  },
-  {
-    name: 'Google',
-    iconName: 'Gemini.Color',
-    desc: 'Google AI & Vertex AI',
-    tag: 'Vertex AI & API',
-  },
-  {
-    name: 'DeepSeek',
-    iconName: 'DeepSeek.Color',
-    desc: 'Full Speed Native & Cloud Clusters',
-    tag: 'Native & Cloud',
-  },
-  {
-    name: 'Mistral',
-    iconName: 'Mistral.Color',
-    desc: 'European AI & Codestral Series',
-    tag: 'European AI',
-  },
-  {
-    name: 'Meta',
-    iconName: 'Meta.Color',
-    desc: 'Llama Open Source Ecosystem',
-    tag: 'Open Source',
-  },
-  {
-    name: 'Groq',
-    iconName: 'Groq',
-    desc: 'LPU Real-time Inference Engine',
-    tag: 'Ultra Fast',
-  },
-  {
-    name: 'Ollama',
-    iconName: 'Ollama',
-    desc: 'Private Self-Hosted Edge Nodes',
-    tag: 'Private Edge',
-  },
-  {
-    name: 'Alibaba Cloud',
-    iconName: 'Qwen.Color',
-    desc: 'Qwen Multilingual Intelligence',
-    tag: 'Enterprise',
-  },
-  {
-    name: 'Moonshot AI',
-    iconName: 'Moonshot.Color',
-    desc: 'Kimi Long Context Processing',
-    tag: 'Long Context',
-  },
-  {
-    name: 'Zhipu AI',
-    iconName: 'Zhipu.Color',
-    desc: 'GLM Multimodal & Reasoning',
-    tag: 'Enterprise',
-  },
-  {
-    name: 'Midjourney',
-    iconName: 'Midjourney',
-    desc: 'Fast Image & Creative Tasks',
-    tag: 'AI Drawing',
-  },
+  { name: 'OpenAI', iconName: 'OpenAI' },
+  { name: 'Anthropic', iconName: 'Claude.Color' },
+  { name: 'Google', iconName: 'Gemini.Color' },
+  { name: 'DeepSeek', iconName: 'DeepSeek.Color' },
+  { name: 'Mistral', iconName: 'Mistral.Color' },
+  { name: 'Meta', iconName: 'Meta.Color' },
+  { name: 'Groq', iconName: 'Groq' },
+  { name: 'Ollama', iconName: 'Ollama' },
+  { name: 'Alibaba Cloud', iconName: 'Qwen.Color' },
+  { name: 'Moonshot AI', iconName: 'Moonshot.Color' },
+  { name: 'Zhipu AI', iconName: 'Zhipu.Color' },
+  { name: 'Midjourney', iconName: 'Midjourney' },
 ]
 
 export function ProviderMarquee() {
   const { t } = useTranslation()
 
   return (
-    <section className='relative z-10 border-t border-border/40 bg-muted/5 py-16 md:py-20'>
+    <section className='border-border/40 bg-muted/5 relative z-10 border-t py-16 md:py-20'>
       <div className='mx-auto max-w-6xl px-6'>
         {/* Header */}
         <AnimateInView className='mb-10 text-center'>
           <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3 py-1 text-xs font-medium text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300'>
             <Sparkles className='size-3.5 text-neutral-600 dark:text-neutral-400' />
-            <span>{t('40+ Upstream Providers & Model Families')}</span>
+            <span>{t('Connect Leading Commercial & Open-Source Models')}</span>
           </div>
           <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
             {t('Universal Connectivity Across Leading AI Models')}
           </h2>
-          <p className='mx-auto mt-2 max-w-2xl text-sm text-muted-foreground/80 md:text-base'>
+          <p className='text-muted-foreground/80 mx-auto mt-2 max-w-2xl text-sm md:text-base'>
             {t(
               'Route any prompt to commercial leaders, open-weights titans, and specialized engines through a unified OpenAI-standard contract.'
             )}
@@ -131,26 +69,16 @@ export function ProviderMarquee() {
           {PROVIDERS.map((provider, i) => (
             <AnimateInView
               key={provider.name}
-              delay={i * 30}
+              delay={i * 25}
               animation='fade-up'
-              className='group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card/60 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-card hover:shadow-md dark:bg-card/40'
+              className='group border-border/50 bg-card/60 hover:border-primary/40 hover:bg-card dark:bg-card/40 dark:hover:border-primary/40 relative flex flex-col items-center justify-center rounded-xl border p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-md'
             >
-              <div className='flex items-center justify-between gap-2'>
-                <div className='flex size-9 items-center justify-center rounded-lg border border-border/40 bg-muted/30 transition-transform duration-300 group-hover:scale-110'>
-                  {getLobeIcon(provider.iconName, 22)}
-                </div>
-                {provider.tag && (
-                  <span className='rounded-full border border-border/40 bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground'>
-                    {provider.tag}
-                  </span>
-                )}
+              <div className='border-border/40 bg-muted/30 group-hover:border-primary/30 group-hover:bg-primary/5 flex size-11 items-center justify-center rounded-xl border transition-all duration-300 group-hover:scale-110'>
+                {getLobeIcon(provider.iconName, 26)}
               </div>
-              <div className='mt-3'>
-                <h3 className='text-sm font-semibold text-foreground'>{provider.name}</h3>
-                <p className='mt-1 text-xs text-muted-foreground line-clamp-1'>
-                  {t(provider.desc)}
-                </p>
-              </div>
+              <h3 className='text-foreground group-hover:text-primary mt-3 text-center text-sm font-semibold transition-colors duration-200'>
+                {provider.name}
+              </h3>
             </AnimateInView>
           ))}
         </div>
