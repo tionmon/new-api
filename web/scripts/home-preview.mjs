@@ -314,7 +314,6 @@ if (process.env.PREVIEW_ADMIN === '1') {
       key: 'UserUsableGroups',
       value: JSON.stringify(GROUP_DESCRIPTIONS, null, 2),
     },
-    { key: 'GroupOrder', value: '[]' },
     { key: 'GroupGroupRatio', value: '{}' },
     { key: 'AutoGroups', value: '[]' },
     { key: 'MaxTokenAutoGroups', value: '5' },

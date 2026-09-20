@@ -38,7 +38,6 @@ const defaults = {
   GroupRatio: '{"default":1,"vip":0.8}',
   TopupGroupRatio: '{"vip":1.2}',
   UserUsableGroups: '{"default":"Standard access","vip":"Premium access"}',
-  GroupOrder: '[]',
   GroupGroupRatio: '{}',
   AutoGroups: '["default","vip"]',
   MaxTokenAutoGroups: 5,
@@ -50,7 +49,6 @@ const schema = z.object({
   GroupRatio: z.string(),
   TopupGroupRatio: z.string(),
   UserUsableGroups: z.string(),
-  GroupOrder: z.string(),
   GroupGroupRatio: z.string(),
   AutoGroups: z.string(),
   MaxTokenAutoGroups: positiveIntegerSchema('Enter a positive integer'),
@@ -81,6 +79,14 @@ function Fixture(props: {
 }
 
 describe('group settings workspace', () => {
+  const pricingList = () => screen.getByRole('list', { name: 'Pricing groups' })
+  const pricingCardNames = () =>
+    within(pricingList())
+      .getAllByRole('listitem')
+      .map(
+        (item) => item.querySelector('span[title]')?.getAttribute('title') ?? ''
+      )
+
   it('filters by description and clears search without discarding edits', async () => {
     const user = userEvent.setup()
     render(<Fixture />)
@@ -88,18 +94,11 @@ describe('group settings workspace', () => {
       name: 'Search groups by name or description',
     })
     await user.type(search, 'PREMIUM')
-    expect(screen.getAllByRole('textbox', { name: 'Group name' })).toHaveLength(
-      1
-    )
-    expect(screen.getByRole('textbox', { name: 'Group name' })).toHaveValue(
-      'vip'
-    )
+    expect(pricingCardNames()).toEqual(['vip'])
     await user.clear(screen.getByRole('spinbutton', { name: 'Ratio' }))
     await user.type(screen.getByRole('spinbutton', { name: 'Ratio' }), '0.6')
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
-    expect(screen.getAllByRole('textbox', { name: 'Group name' })).toHaveLength(
-      2
-    )
+    expect(pricingCardNames()).toEqual(['default', 'vip'])
     expect(screen.getAllByRole('spinbutton', { name: 'Ratio' })[1]).toHaveValue(
       0.6
     )
@@ -126,7 +125,7 @@ describe('group settings workspace', () => {
       screen.getByRole('tab', { name: 'Special ratio rules' })
     ).toHaveAttribute('aria-selected', 'true')
     expect(
-      screen.queryByRole('table', { name: 'Pricing groups' })
+      screen.queryByRole('list', { name: 'Pricing groups' })
     ).not.toBeInTheDocument()
     await user.click(screen.getByRole('tab', { name: 'Group visibility' }))
     await user.click(screen.getByRole('button', { name: 'Add rule' }))

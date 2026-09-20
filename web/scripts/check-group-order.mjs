@@ -17,11 +17,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 /**
- * 分组定价排序功能的本地截图与自检。
+ * 分组定价卡片列表的本地截图与自检。
  *
- * 用途：改动后不改生产、不需要真实后台凭据，就能看到「分组定价」页的
- * 排序交互（拖拽把手 + 上/下移按钮）真实渲染结果，并验证移动一行之后
- * 写回的 GroupOrder 与用户侧接口带出的顺序一致。
+ * 用途：改动后不改生产、不需要真实后台凭据，就能看到「分组定价」页卡片列表的真实
+ * 渲染结果，并验证：卡片序 = 保存下来的 GroupRatio 键序 = 用户侧接口带出的顺序，
+ * 一条链上只有一个真相。
  *
  * 运行（在 web/ 目录下，先 bun run build）：
  *   node scripts/check-group-order.mjs
@@ -65,6 +65,7 @@ const screenshotDir =
 fs.mkdirSync(screenshotDir, { recursive: true })
 
 const GROUP_PRICING_ROUTE = '/system-settings/billing/group-pricing'
+const LIST = '#group-pricing-order-affordance'
 const groupOrderNames = [
   '福利分组',
   'Gemini Ultra分组',
@@ -103,6 +104,20 @@ function start(command, args, options = {}) {
   children.push(child)
   return child
 }
+
+// 卡片按分组名找按钮：官方卡片把名字写在 span 的 title 上，控件只认名字。
+const cards = `Array.from(document.querySelectorAll('${LIST} > li'))`
+const cardNamed = (name) =>
+  `${cards}.find(card => card.querySelector('span[title]')?.getAttribute('title') === ${JSON.stringify(name)})`
+// 把手是官方卡片里唯一带 cursor-grab 的按钮（图标本身没有类名可认）。
+const gripOf = (scope) =>
+  `Array.from(${scope}.querySelectorAll('button')).find(button => button.className.includes('cursor-grab'))`
+const buttonLabelled = (scope, label) =>
+  `Array.from(${scope}.querySelectorAll('button')).find(button => button.getAttribute('aria-label') === ${JSON.stringify(label)})`
+// 详情面板里的名字输入框与它的提交键（提交键是输入框的兄弟节点，按文字找会先撞上
+// 卡片头部的「添加分组」）。
+const NAME_INPUT = `document.querySelector('input[aria-label="' + ${JSON.stringify(zhLabel('Group name'))} + '"]')`
+const NAME_COMMIT = `document.querySelector('input[aria-label="' + ${JSON.stringify(zhLabel('Group name'))} + '"]')?.parentElement?.querySelector('button')`
 
 try {
   let previewOutput = ''
@@ -161,7 +176,7 @@ try {
         pending.delete(id)
         reject(new Error(`CDP timeout: ${method}`))
       }, 20000)
-      pending.set(id, { resolve, reject, timer })
+      pending.set(id, { resolve, reject, timer, method })
       ws.send(JSON.stringify({ id, method, params }))
     })
   }
@@ -172,8 +187,11 @@ try {
       if (!task) return
       clearTimeout(task.timer)
       pending.delete(message.id)
-      if (message.error) task.reject(new Error(message.error.message))
-      else task.resolve(message.result)
+      if (message.error) {
+        task.reject(new Error(`CDP ${task.method}: ${message.error.message}`))
+      } else {
+        task.resolve(message.result)
+      }
       return
     }
     if (message.method === 'Runtime.exceptionThrown') {
@@ -295,36 +313,36 @@ try {
   })()`
   }
 
-  /** Group-name column of the pricing table, top to bottom. */
-  function readTableGroupNames() {
+  /** Group-name column of the pricing cards, top to bottom. */
+  function readCardNames() {
     return evaluate(
-      `Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr')).map(row => row.querySelector('input')?.value ?? '')`
+      `${cards}.map(card => card.querySelector('span[title]')?.getAttribute('title') ?? '')`
     )
   }
 
   /**
-   * Drags a row's sort handle onto another row using plain pointer events.
+   * Drags a card's grip onto another card using plain pointer events.
    *
-   * Rows are reordered by motion's Reorder, which listens to pointerdown/move/up —
+   * Cards are reordered by motion's Reorder, which listens to pointerdown/move/up —
    * not to the browser's native drag-and-drop — so there is no drag interception
    * here. Driving the same events a finger or mouse produces also means this test
-   * fails if the row stops following the pointer.
+   * fails if the card stops following the pointer.
    *
-   * Returns the vertical offsets sampled mid-drag, per row, so the caller can assert
-   * that the dragged row actually moved with the cursor.
+   * Returns the vertical offsets sampled mid-drag, per card, so the caller can
+   * assert that the dragged card actually moved with the cursor.
    */
-  async function rowOffsetsFromRest() {
+  async function cardOffsetsFromRest() {
     return evaluate(`(() => {
-      const rows = Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr'));
-      return rows.map(row => {
-        const transform = getComputedStyle(row).transform;
+      const cards = ${cards};
+      return cards.map(card => {
+        const transform = getComputedStyle(card).transform;
         if (!transform || transform === 'none') return 0;
         return Math.round(new DOMMatrixReadOnly(transform).m42);
       });
     })()`)
   }
 
-  async function dragRowHandle(from, to) {
+  async function dragCardGrip(from, to) {
     await send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       x: from.x,
@@ -349,7 +367,7 @@ try {
         buttons: 1,
       })
       await pause(120)
-      samples.push(await rowOffsetsFromRest())
+      samples.push(await cardOffsetsFromRest())
     }
     const offsets = samples.at(-1) ?? []
     await send('Input.dispatchMouseEvent', {
@@ -362,6 +380,46 @@ try {
     })
     await pause(450)
     return { offsets, samples }
+  }
+
+  /** Types into a controlled input the way a keyboard does. */
+  async function retype(inputFinder, text) {
+    await evaluate(`(() => {
+      const input = ${inputFinder};
+      if (!input) throw new Error('Missing input');
+      input.focus();
+      input.select();
+      return true;
+    })()`)
+    await send('Input.insertText', { text })
+    await pause(150)
+  }
+
+  /** Presses and releases one key, the way a keyboard does. */
+  async function pressKey(key) {
+    const keyCode = { ArrowUp: 38, ArrowDown: 40, Escape: 27 }[key]
+    for (const type of ['keyDown', 'keyUp']) {
+      await send('Input.dispatchKeyEvent', {
+        type,
+        key,
+        // code 是键名（用 key 本身），windowsVirtualKeyCode 才是数字。
+        code: key,
+        windowsVirtualKeyCode: keyCode,
+        nativeVirtualKeyCode: keyCode,
+      })
+    }
+    await pause(250)
+  }
+
+  /** Escapes out of the detail sheet: while it is open every click outside it
+   *  lands on the modal backdrop instead of the control it aimed at. */
+  async function closeSheet() {
+    await pressKey('Escape')
+    await until(
+      async () => !(await evaluate(`!!${NAME_INPUT}`)),
+      'sheet to close'
+    )
+    await pause(250)
   }
 
   await send('Page.enable')
@@ -379,41 +437,52 @@ try {
     url: origin,
   })
 
-  // ---- The admin table renders, in order, with sort affordances ----
+  // ---- The pricing cards render, in order, with sort affordances ----
   await viewport(1680, 1050)
-  await navigate(GROUP_PRICING_ROUTE, '#group-pricing-order-affordance')
+  await navigate(GROUP_PRICING_ROUTE, LIST)
 
   const noteLabel = zhLabel(
     'Users pick groups in this order. It does not change the auto group routing priority.'
   )
+  const LABELS = {
+    up: zhLabel('Move {{group}} up'),
+    down: zhLabel('Move {{group}} down'),
+    details: zhLabel('Details'),
+    fields: ['Ratio', 'Top-up ratio', 'User selectable', 'Description'].map(
+      zhLabel
+    ),
+  }
+  const initialNames = await readCardNames()
   const initial = await evaluate(`(() => {
-    const table = document.querySelector('#group-pricing-order-affordance');
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    // Labels are localized, so target the controls positionally: the first two
-    // buttons in the sort cell are move-up and move-down.
-    // 把手也是一个 button，按位置取会把它当成上移键——按内容排除掉它。
-    const buttonsOf = row => Array.from(row.querySelectorAll('button'))
-      .filter(b => !b.querySelector('svg.lucide-grip-vertical'));
+    const cards = ${cards};
+    const LABELS = ${JSON.stringify(LABELS)};
+    const withName = (template, name) => template.replace('{{group}}', name);
+    const nameOf = card => card.querySelector('span[title]')?.getAttribute('title') ?? '';
+    const button = (card, label) => Array.from(card.querySelectorAll('button'))
+      .find(b => b.getAttribute('aria-label') === label) ?? null;
+    const cardBy = name => cards.find(card => nameOf(card) === name);
+    const labels = Array.from(cards[0].querySelectorAll('span'))
+      .map(span => span.textContent?.trim() || '');
     return {
-      handles: rows.every(row => row.querySelector('svg.lucide-grip-vertical')),
-      upDisabled: buttonsOf(rows[0])[0]?.disabled === true,
-      downDisabled: buttonsOf(rows.at(-1))[1]?.disabled === true,
-      upEnabled: buttonsOf(rows[1])[0]?.disabled === false,
-      sortHeader: table.querySelector('thead th')?.textContent?.trim(),
+      handles: cards.every(card => !!${gripOf('card')}),
+      upDisabled: button(cardBy(nameOf(cards[0])), withName(LABELS.up, nameOf(cards[0])))?.disabled === true,
+      downDisabled: button(cardBy(nameOf(cards.at(-1))), withName(LABELS.down, nameOf(cards.at(-1))))?.disabled === true,
+      upEnabled: button(cards[1], withName(LABELS.up, nameOf(cards[1])))?.disabled === false,
+      fieldLabels: LABELS.fields.filter(label => labels.includes(label)),
+      detailButtons: cards.filter(card => !!button(card, LABELS.details)).length,
       note: document.body.innerText.includes(${JSON.stringify(noteLabel)}),
     };
   })()`)
-  const initialNames = await readTableGroupNames()
   check(
     initialNames.length === 7 &&
       initialNames[0] === '福利分组' &&
       initialNames[6] === 'Claude Max分组',
-    'table lists all seven groups in the stored order',
+    'the card list shows all seven groups in the stored order',
     initialNames.join(' → ')
   )
-  check(initial.handles, 'every row has a drag handle')
+  check(initial.handles, 'every card has a drag handle')
   const gripShape = await evaluate(`(() => {
-    const grip = document.querySelector('#group-pricing-order-affordance tbody tr svg.lucide-grip-vertical')?.closest('button');
+    const grip = ${gripOf(`${cardNamed('福利分组')}`)};
     return grip ? { tag: grip.tagName, label: grip.getAttribute('aria-label') || '' } : null;
   })()`)
   check(
@@ -422,161 +491,306 @@ try {
     JSON.stringify(gripShape)
   )
 
-  // 方向键：先上移再下移，验证两种方向都能搬动行，最后把顺序还原，
-  // 免得影响后面那几条依赖行序的断言。
-  const beforeKeys = await readTableGroupNames()
+  // 方向键：一次只按一个方向，并当场检查卡片确实换了位——「按上再按下回到原样」
+  // 这种净零断言，键盘完全失灵时也是绿的。最后还要把顺序按回去，免得影响后面那
+  // 几条依赖卡片序的断言。
+  const beforeKeys = await readCardNames()
   const focused = await evaluate(`(() => {
-    const grip = document.querySelectorAll('#group-pricing-order-affordance tbody tr')[1]
-      .querySelector('svg.lucide-grip-vertical').closest('button');
+    const grip = ${gripOf(`${cards}[1]`)};
     grip.focus();
     return document.activeElement === grip;
   })()`)
-  for (const key of ['ArrowUp', 'ArrowDown']) {
-    const code = key === 'ArrowUp' ? 38 : 40
-    await send('Input.dispatchKeyEvent', {
-      type: 'keyDown',
-      key,
-      code: key,
-      windowsVirtualKeyCode: code,
-      nativeVirtualKeyCode: code,
-    })
-    await send('Input.dispatchKeyEvent', {
-      type: 'keyUp',
-      key,
-      code: key,
-      windowsVirtualKeyCode: code,
-      nativeVirtualKeyCode: code,
-    })
-    await pause(250)
-  }
-  const afterKeys = await readTableGroupNames()
+  await pressKey('ArrowUp')
+  const afterUp = await readCardNames()
   check(
-    focused && JSON.stringify(afterKeys) === JSON.stringify(beforeKeys),
-    'arrow keys on the focused grip move the row and move it back',
-    `focused=${focused} ${beforeKeys.slice(0, 2).join(' → ')} ⇒ ${afterKeys.slice(0, 2).join(' → ')} ⇒ 还原`
+    focused && afterUp[0] === beforeKeys[1] && afterUp[1] === beforeKeys[0],
+    'arrow up on the focused grip moves the card one place up',
+    `focused=${focused} ${beforeKeys.slice(0, 2).join(' → ')} ⇒ ${afterUp.slice(0, 2).join(' → ')}`
+  )
+  await pressKey('ArrowDown')
+  const afterKeys = await readCardNames()
+  check(
+    JSON.stringify(afterKeys) === JSON.stringify(beforeKeys),
+    'arrow down puts it back where it started',
+    `${afterUp.slice(0, 2).join(' → ')} ⇒ ${afterKeys.slice(0, 2).join(' → ')}`
   )
   check(
     initial.upDisabled && initial.downDisabled && initial.upEnabled,
-    'up is disabled on the first row, down on the last, and enabled in between',
+    'up is disabled on the first card, down on the last, and enabled in between',
     JSON.stringify({
       upDisabled: initial.upDisabled,
       downDisabled: initial.downDisabled,
       upEnabled: initial.upEnabled,
     })
   )
+
+  // 四格跨卡片等宽：同一列的控件左边缘必须逐卡片对齐，否则卡片一多就成了锯齿。
+  const columns = await evaluate(`(() => {
+    const cards = ${cards};
+    const lefts = (label) => cards.map(card => {
+      const input = card.querySelector('input[aria-label="' + label + '"]');
+      return input ? Math.round(input.getBoundingClientRect().left) : null;
+    });
+    const details = cards.map(card => {
+      const button = Array.from(card.querySelectorAll('button'))
+        .find(b => b.getAttribute('aria-label') === ${JSON.stringify(LABELS.details)});
+      return button ? Math.round(button.getBoundingClientRect().left) : null;
+    });
+    return {
+      ratio: lefts(${JSON.stringify(zhLabel('Ratio'))}),
+      topup: lefts(${JSON.stringify(zhLabel('Top-up ratio'))}),
+      // 不暴露给用户的分组没有说明信息输入框，只有它有值的那几张算对齐。
+      description: lefts(${JSON.stringify(zhLabel('Group description'))}).filter(value => value !== null),
+      details,
+    };
+  })()`)
+  const aligned = (values) => values.length > 1 && new Set(values).size === 1
   check(
-    initial.sortHeader === zhLabel('Sort Order'),
-    'the sort column is present',
-    initial.sortHeader
+    aligned(columns.ratio) &&
+      aligned(columns.topup) &&
+      aligned(columns.description) &&
+      columns.ratio[0] !== columns.description[0],
+    'the ratio, top-up and description columns line up across every card',
+    JSON.stringify(columns)
+  )
+  check(
+    initial.fieldLabels.length === 4 && initial.detailButtons === 7,
+    'every card carries the four labelled fields and a details entry',
+    JSON.stringify({
+      labels: initial.fieldLabels,
+      detailButtons: initial.detailButtons,
+    })
   )
   check(initial.note, 'the display-order note is shown')
   await capture('group-pricing-desktop')
 
-  // ---- JSON mode exposes the same order as a plain array ----
-  // 表格行序必须在切模式之前读：切到 JSON 后那张表就不在 DOM 里了。
-  const tableOrderBeforeJson = await readTableGroupNames()
+  // ---- JSON mode exposes the same order as plain keys ----
+  // 卡片序必须在切模式之前读：切到 JSON 后卡片列表就不在 DOM 里了。
+  const cardsBeforeJson = await readCardNames()
   await click(byButtonText(zhButtonPattern('Switch to JSON')))
   const jsonMode = await evaluate(`(() => {
-    const field = document.querySelector('textarea[name="GroupOrder"]');
+    const field = document.querySelector('textarea[name="GroupRatio"]');
     if (!field) return {found: false};
-    const squash = v => v.replace(/\\s+/g, '');
-    return {found: true, value: squash(field.value)};
+    return {found: true, keys: Object.keys(JSON.parse(field.value))};
   })()`)
-  // 断言成「与表格当前行序一致」而不是「为空」：后者只是这个 fixture 初值的巧合，
-  // 而前者才是这条检查真正要证明的事——两个模式的顺序是同一个。
+  // 断言成「与卡片序一致」而不是某个固定数组：这才是这条检查要证明的事——两个
+  // 模式看到的是同一个顺序，而顺序本身由 GroupRatio 的键序承载。
   check(
     jsonMode.found &&
-      jsonMode.value ===
-        JSON.stringify(
-          tableOrderBeforeJson.map((name) => name.replaceAll(/\s+/g, ''))
-        ),
-    'JSON mode exposes the same order the table shows',
-    `${jsonMode.value}  vs  ${JSON.stringify(tableOrderBeforeJson)}`
+      JSON.stringify(jsonMode.keys) === JSON.stringify(cardsBeforeJson),
+    'JSON mode shows GroupRatio keys in the card order',
+    `${JSON.stringify(jsonMode.keys)}  vs  ${JSON.stringify(cardsBeforeJson)}`
   )
   await click(byButtonText(zhButtonPattern('Switch to Visual')))
 
-  // ---- Moving the second row up rewrites GroupOrder, and the users' order follows ----
-  // 行内第一个 button 现在是拖拽把手，这里要的是上移键，所以按内容排除把手。
+  // ---- Moving the second card up rewrites the key order, and the users' order follows ----
   await click(
-    `(() => {
-      const row = document.querySelector('#group-pricing-order-affordance tbody tr:nth-child(2)');
-      return Array.from(row.querySelectorAll('button'))
-        .filter(b => !b.querySelector('svg.lucide-grip-vertical'))[0];
-    })()`
+    `${buttonLabelled(cardNamed('Gemini Ultra分组'), zhLabel('Move {{group}} up').replace('{{group}}', 'Gemini Ultra分组'))}`
   )
-  const afterMove = await readTableGroupNames()
+  const afterMove = await readCardNames()
   check(
     afterMove[0] === 'Gemini Ultra分组' && afterMove[1] === '福利分组',
-    'moving a group up swaps it with the row above',
+    'moving a group up swaps it with the card above',
     afterMove.join(' → ')
   )
 
   await click(byButtonText(zhButtonPattern('Save group settings')))
-  const orderWrite = await until(
-    () => optionWrites.find((write) => write.key === 'GroupOrder'),
-    'GroupOrder write',
+  const ratioWrite = await until(
+    () => optionWrites.find((write) => write.key === 'GroupRatio'),
+    'GroupRatio write',
     10000
   )
+  const movedOrder = [
+    'Gemini Ultra分组',
+    '福利分组',
+    'Pro 20x分组',
+    '国模分组',
+    '特价国模分组',
+    'Claude Kiro分组',
+    'Claude Max分组',
+  ]
   check(
-    JSON.stringify(JSON.parse(orderWrite.value)) ===
-      JSON.stringify([
-        'Gemini Ultra分组',
-        '福利分组',
-        'Pro 20x分组',
-        '国模分组',
-        '特价国模分组',
-        'Claude Kiro分组',
-        'Claude Max分组',
-      ]),
-    'saving persists the new group order',
-    orderWrite.value
+    JSON.stringify(Object.keys(JSON.parse(ratioWrite.value))) ===
+      JSON.stringify(movedOrder),
+    'saving writes the card order into the GroupRatio keys',
+    ratioWrite.value
   )
 
-  // /api/user/self/groups keeps its map payload and adds the order array; this is
-  // what the keys drawer, playground and pricing filters consume.
+  // /api/user/self/groups keeps its map payload and carries the order array; this is
+  // what the keys drawer, playground and pricing filters consume. 预览不落库，所以
+  // 这里只证明信封形状：顺序数组与 map 的键序一致（线上那份由后端从 GroupRatio 键
+  // 序现读，见 Go 侧 setting/group_order_test.go）。
   const served = await (
     await fetch(`${origin}/api/user/self/groups`, {
       headers: { cookie: 'preview_auth=1' },
     })
   ).json()
+  const servedNames = Object.keys(served.data ?? {})
   check(
-    Object.keys(served.data ?? {}).length === 7 &&
+    servedNames.length === 7 &&
       Array.isArray(served.group_order) &&
-      served.group_order.length === 7,
-    'user-facing groups payload carries the map plus the order array',
-    `groups=${Object.keys(served.data ?? {}).length} order=${JSON.stringify(served.group_order)}`
+      JSON.stringify(served.group_order) === JSON.stringify(servedNames),
+    'the user-facing groups payload carries the map plus a matching order array',
+    `groups=${servedNames.length} order=${JSON.stringify(served.group_order)}`
   )
 
-  // ---- Dragging a handle onto another row reorders the rows the same way ----
+  // ---- Dragging a grip onto another card reorders the cards the same way ----
   await viewport(1440, 1200)
   await evaluate(`(() => {
-    const rows = Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr'));
-    rows[rows.length - 1]?.scrollIntoView({block: 'end'});
+    const cards = ${cards};
+    cards[cards.length - 1]?.scrollIntoView({block: 'end'});
     return true;
   })()`)
   await pause(300)
   const dragFrom = await evaluate(`(() => {
-    const rows = Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr'));
+    const cards = ${cards};
     const centre = el => { const r = el.getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.top + r.height/2)} };
     return {
-      handle: centre(rows[0].querySelector('svg.lucide-grip-vertical').parentElement),
-      to: (() => { const r = rows[rows.length - 1].getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.bottom + 6)}; })(),
+      handle: centre(${gripOf(`${cards}[0]`)}),
+      to: (() => { const r = cards[cards.length - 1].getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.bottom + 6)}; })(),
     };
   })()`)
-  const beforeDrag = await readTableGroupNames()
+  const beforeDrag = await readCardNames()
   const { offsets: midDragOffsets, samples: midDragSamples } =
-    await dragRowHandle(dragFrom.handle, dragFrom.to)
-  const afterDrag = await readTableGroupNames()
+    await dragCardGrip(dragFrom.handle, dragFrom.to)
+  const afterDrag = await readCardNames()
   check(
     midDragOffsets.some((offset) => Math.abs(offset) > 8),
-    'the dragged row is translated away from its resting position mid-drag',
+    'the dragged card is translated away from its resting position mid-drag',
     `offsets=${JSON.stringify(midDragOffsets)} samples=${JSON.stringify(midDragSamples)}`
   )
   check(
     JSON.stringify(afterDrag) ===
       JSON.stringify([...beforeDrag.slice(1), beforeDrag[0]]),
-    'dragging a row handle reorders the table',
+    'dragging a grip reorders the cards',
     `${beforeDrag.slice(0, 2).join(' → ')} … ⇒ … ${afterDrag.slice(-2).join(' → ')}`
+  )
+
+  // ---- 添加分组：先在详情面板里给新分组起名，名字定了才落卡片 ----
+  await viewport(1680, 1050)
+  await navigate(GROUP_PRICING_ROUTE, LIST)
+  await click(byButtonText(zhButtonPattern('Add group')))
+  const added = await evaluate(`(() => {
+    const input = ${NAME_INPUT};
+    return {
+      value: input?.value ?? null,
+      focused: input === document.activeElement,
+      selected:
+        input !== null &&
+        input.selectionStart === 0 &&
+        input.selectionEnd === input.value.length,
+    };
+  })()`)
+  check(
+    added.value === 'group_1' && added.focused && added.selected,
+    'adding a group opens the sheet with a free name selected',
+    JSON.stringify(added)
+  )
+  const newGroup = '新增分组'
+  await retype(NAME_INPUT, newGroup)
+  await click(`${NAME_COMMIT}`)
+  const withNewGroup = await readCardNames()
+  check(
+    withNewGroup.length === 8 && withNewGroup.at(-1) === newGroup,
+    'committing the name appends the new group as the last card',
+    withNewGroup.join(' → ')
+  )
+  await closeSheet()
+  await click(byButtonText(zhButtonPattern('Save group settings')))
+  const addWrite = await until(
+    () =>
+      optionWrites.find(
+        (write) =>
+          write.key === 'GroupRatio' &&
+          JSON.parse(write.value)[newGroup] !== undefined
+      ),
+    'GroupRatio write with the new group',
+    10000
+  )
+  check(
+    Object.keys(JSON.parse(addWrite.value)).at(-1) === newGroup,
+    'saving writes the new group last',
+    Object.keys(JSON.parse(addWrite.value)).join(' → ')
+  )
+
+  // ---- The detail sheet renames a group, and the card order keeps it ----
+  await navigate(GROUP_PRICING_ROUTE, LIST)
+  await click(buttonLabelled(cardNamed('福利分组'), zhLabel('Details')))
+  const renamed = '福利分组改'
+  await retype(NAME_INPUT, renamed)
+  await click(byButtonText(zhButtonPattern('Rename')))
+  const afterRename = await readCardNames()
+  check(
+    afterRename[0] === renamed && !afterRename.includes('福利分组'),
+    'renaming in the detail sheet renames the card',
+    afterRename.join(' → ')
+  )
+
+  // 详情面板是模态的：不关掉它，后面的点击全落在遮罩上，等于没点。
+  await closeSheet()
+  await click(byButtonText(zhButtonPattern('Save group settings')))
+  const renameWrite = await until(
+    () =>
+      optionWrites
+        .filter((write) => write.key === 'GroupRatio')
+        .find((write) => JSON.parse(write.value)[renamed] !== undefined),
+    'renamed GroupRatio write',
+    10000
+  )
+  check(
+    Object.keys(JSON.parse(renameWrite.value))[0] === renamed,
+    'saving writes the renamed key in the same position',
+    Object.keys(JSON.parse(renameWrite.value)).join(' → ')
+  )
+
+  // ---- 重名必须当场拦下：卡片顺序和保存都以名字为准，两个同名分组没有意义 ----
+  await navigate(GROUP_PRICING_ROUTE, LIST)
+  const writesBeforeDuplicate = optionWrites.length
+  await click(buttonLabelled(cardNamed('Pro 20x分组'), zhLabel('Details')))
+  await retype(NAME_INPUT, '福利分组')
+  const duplicate = await evaluate(`(() => {
+    const input = ${NAME_INPUT};
+    const button = ${NAME_COMMIT};
+    return {
+      invalid: input?.getAttribute('aria-invalid'),
+      hint: document.body.innerText.includes(${JSON.stringify(zhLabel('This group name is already in use.'))}),
+      disabled: button ? button.disabled : null,
+      label: (button?.textContent || '').trim(),
+      draft: input?.value,
+    };
+  })()`)
+  check(
+    duplicate.invalid === 'true' &&
+      duplicate.hint &&
+      duplicate.disabled === true &&
+      duplicate.label === zhLabel('Rename'),
+    'a name another group already uses is refused in place',
+    JSON.stringify(duplicate)
+  )
+  await closeSheet()
+  await click(byButtonText(zhButtonPattern('Save group settings')))
+  // 什么都没改时保存不一定发请求，所以两条都收：要么没写，要么写下来的仍是原来那
+  // 七个名字——总之这个重名不许落盘。
+  await pause(1500)
+  const keptWrites = optionWrites
+    .slice(writesBeforeDuplicate)
+    .filter((write) => write.key === 'GroupRatio')
+  const keptNames = await readCardNames()
+  const spoiledWrite = keptWrites.find((write) => {
+    const keys = Object.keys(JSON.parse(write.value))
+    return (
+      keys.length !== 7 ||
+      !keys.includes('福利分组') ||
+      !keys.includes('Pro 20x分组')
+    )
+  })
+  check(
+    spoiledWrite === undefined &&
+      keptNames.length === 7 &&
+      keptNames.includes('福利分组') &&
+      keptNames.includes('Pro 20x分组'),
+    'the refused name never reaches the saved settings',
+    `writes=${keptWrites.length} ${keptNames.join(' → ')}`
   )
 
   // ---- The user-facing model square lists groups in the admin's order ----
@@ -603,21 +817,39 @@ try {
   )
   await capture('pricing-group-filter-desktop')
 
-  // ---- Mobile: the sort controls must not overflow ----
+  // ---- Mobile: the cards must stack without overflowing ----
   await viewport(390, 844, true)
-  await navigate(GROUP_PRICING_ROUTE, '#group-pricing-order-affordance')
+  await navigate(GROUP_PRICING_ROUTE, LIST)
   const mobile = await evaluate(`(() => {
-    const table = document.querySelector('#group-pricing-order-affordance');
-    const host = table.closest('div');
+    const cards = ${cards};
+    const overflow = cards
+      .map(card => Math.round(card.getBoundingClientRect().right))
+      .filter(right => right > innerWidth + 1);
     return {
-      overflow: document.documentElement.scrollWidth > innerWidth + 1,
-      tableScrolls: host.scrollWidth > host.clientWidth,
+      pageOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+      cardsPastViewport: overflow.length,
+      firstRowFields: (() => {
+        const card = cards[0];
+        const ratio = card.querySelector('input[aria-label="' + ${JSON.stringify(zhLabel('Ratio'))} + '"]');
+        const description = card.querySelector('input[aria-label="' + ${JSON.stringify(zhLabel('Group description'))} + '"]');
+        if (!ratio || !description) return null;
+        return {
+          sameRow: Math.abs(ratio.getBoundingClientRect().top - description.getBoundingClientRect().top) < 2,
+          ratioLeft: Math.round(ratio.getBoundingClientRect().left),
+          descriptionLeft: Math.round(description.getBoundingClientRect().left),
+        };
+      })(),
     };
   })()`)
   check(
-    !mobile.overflow,
-    'no page-level horizontal overflow at 390px',
+    !mobile.pageOverflow && mobile.cardsPastViewport === 0,
+    'no horizontal overflow at 390px',
     JSON.stringify(mobile)
+  )
+  check(
+    mobile.firstRowFields !== null && !mobile.firstRowFields.sameRow,
+    'the four fields stack onto separate lines on a phone',
+    JSON.stringify(mobile.firstRowFields)
   )
   await capture('group-pricing-mobile')
 

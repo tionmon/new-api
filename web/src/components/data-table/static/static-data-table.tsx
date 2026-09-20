@@ -16,11 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { GripVertical } from 'lucide-react'
-import { Reorder, useDragControls } from 'motion/react'
 import * as React from 'react'
 
-import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -33,30 +30,6 @@ import { cn } from '@/lib/utils'
 
 import { TruncatedCell } from '../core/truncated-cell'
 import { staticDataTableClassNames } from './static-data-table-classnames'
-
-/**
- * Pointer-driven row reordering: rows follow the cursor and the rest animate into
- * place as you drag. Opt-in per table — omit it and rows behave exactly as before.
- * It is pointer-based (motion's Reorder), not the browser's native drag-and-drop,
- * because native DnD only moves a small drag image and never the row itself.
- */
-type StaticDataTableReorder = {
-  /** Row keys in display order; must be what `getRowKey` returns for the same rows. */
-  values: React.Key[]
-  /** Called once on drop with the new order. */
-  onReorder: (values: React.Key[]) => void
-  /**
-   * Accessible name for a row's grip, already translated by the caller. The grip is
-   * a real button (upstream's sortable item is one too), so this is what a screen
-   * reader announces and what the tooltip shows.
-   */
-  labelFor?: (value: React.Key) => string
-  /**
-   * Gives the grip's arrow keys something to do — the keyboard equivalent of a drag,
-   * so reordering is not pointer-only.
-   */
-  onMove?: (value: React.Key, direction: 'up' | 'down') => void
-}
 
 type StaticDataTableBaseProps = {
   className?: string
@@ -74,7 +47,6 @@ type StaticDataTableDataProps<TData = unknown> = StaticDataTableBaseProps & {
   getRowKey?: (row: TData, index: number) => React.Key
   getRowClassName?: (row: TData, index: number) => string | undefined
   renderRow?: (row: TData, index: number) => React.ReactNode
-  reorder?: StaticDataTableReorder
   empty?: boolean
   emptyContent?: React.ReactNode
   emptyClassName?: string
@@ -85,7 +57,6 @@ type StaticDataTableChildrenProps = StaticDataTableBaseProps & {
   children: React.ReactNode
   columns?: never
   data?: never
-  reorder?: never
 }
 
 type StaticDataTableProps<TData = unknown> =
@@ -98,12 +69,6 @@ export type StaticDataTableColumn<TData = unknown> = {
   className?: string
   cellClassName?: string | ((row: TData, index: number) => string | undefined)
   cell?: (row: TData, index: number) => React.ReactNode
-  /**
-   * When the table has `reorder`, a grip that starts the drag is rendered at the
-   * start of this column's cells. Use it rather than an `onDragStart` handler: the
-   * grip is what keeps the rest of the row (inputs, selects) interactive.
-   */
-  dragHandle?: boolean
 }
 
 export function StaticDataTable<TData = unknown>(
@@ -133,7 +98,6 @@ function StaticDataTableWithColumns<TData>({
   getRowKey,
   getRowClassName,
   renderRow,
-  reorder,
   empty,
   emptyContent,
   emptyClassName,
@@ -148,8 +112,6 @@ function StaticDataTableWithColumns<TData>({
       columns={columns}
       getRowClassName={getRowClassName}
       renderRow={renderRow}
-      reorder={reorder}
-      value={getRowKey?.(row, index) ?? index}
     />
   ))
 
@@ -164,32 +126,18 @@ function StaticDataTableWithColumns<TData>({
           ))}
         </TableRow>
       </TableHeader>
-      {reorder && !isEmpty ? (
-        <Reorder.Group
-          as='tbody'
-          axis='y'
-          values={reorder.values}
-          onReorder={reorder.onReorder}
-          // Mirrors TableBody so the reorderable body looks identical to every other
-          // table in the app.
-          className='[&_tr:last-child]:border-0 [&>tr]:h-15'
-        >
-          {bodyRows}
-        </Reorder.Group>
-      ) : (
-        <TableBody>
-          {isEmpty ? (
-            <StaticDataTableEmptyRow
-              colSpan={columns.length}
-              className={emptyClassName}
-            >
-              {emptyContent}
-            </StaticDataTableEmptyRow>
-          ) : (
-            bodyRows
-          )}
-        </TableBody>
-      )}
+      <TableBody>
+        {isEmpty ? (
+          <StaticDataTableEmptyRow
+            colSpan={columns.length}
+            className={emptyClassName}
+          >
+            {emptyContent}
+          </StaticDataTableEmptyRow>
+        ) : (
+          bodyRows
+        )}
+      </TableBody>
     </>
   )
 }
@@ -197,13 +145,9 @@ function StaticDataTableWithColumns<TData>({
 type StaticDataTableRowProps<TData> = Required<
   Pick<StaticDataTableDataProps<TData>, 'columns'>
 > &
-  Pick<
-    StaticDataTableDataProps<TData>,
-    'getRowClassName' | 'renderRow' | 'reorder'
-  > & {
+  Pick<StaticDataTableDataProps<TData>, 'getRowClassName' | 'renderRow'> & {
     row: TData
     index: number
-    value: React.Key
   }
 
 function StaticDataTableRow<TData>({
@@ -212,103 +156,25 @@ function StaticDataTableRow<TData>({
   columns,
   getRowClassName,
   renderRow,
-  reorder,
-  value,
 }: StaticDataTableRowProps<TData>) {
-  // Unconditional on purpose: a hook cannot be called only when reordering is on,
-  // and the control itself is inert unless the grip starts a drag.
-  const dragControls = useDragControls()
-
   if (renderRow) {
     return <>{renderRow(row, index)}</>
   }
 
-  const cells = columns.map((column) => (
-    <TableCell
-      key={column.id}
-      className={cn(
-        'max-w-full min-w-0 overflow-hidden',
-        getStaticCellClassName(column, row, index)
-      )}
-    >
-      {column.dragHandle && reorder ? (
-        <DragHandle
-          controls={dragControls}
-          label={reorder.labelFor?.(value)}
-          onMove={
-            reorder.onMove
-              ? (direction) => reorder.onMove?.(value, direction)
-              : undefined
-          }
-        />
-      ) : null}
-      {renderStaticCellContent(column, row, index)}
-    </TableCell>
-  ))
-
-  if (reorder) {
-    return (
-      <Reorder.Item
-        as='tr'
-        value={value}
-        dragListener={false}
-        // No momentum: a flicked row should land where it was dropped, not coast past
-        // it. Upstream's sortable item disables it for the same reason.
-        dragMomentum={false}
-        dragControls={dragControls}
-        className={cn(
-          'bg-background relative [&>td]:align-middle',
-          getRowClassName?.(row, index)
-        )}
-      >
-        {cells}
-      </Reorder.Item>
-    )
-  }
-
-  return <TableRow className={getRowClassName?.(row, index)}>{cells}</TableRow>
-}
-
-/**
- * The grip that starts a row drag. Rendered by the table (not the caller) so the
- * motion drag controls stay inside the row they move.
- *
- * A real button rather than a decorative span, matching the sortable item upstream
- * uses for the auto-group list: it is reachable by keyboard, its arrow keys move the
- * row, and its accessible name says which row it moves.
- */
-function DragHandle({
-  controls,
-  label,
-  onMove,
-}: {
-  controls: ReturnType<typeof useDragControls>
-  label?: string
-  onMove?: (direction: 'up' | 'down') => void
-}) {
   return (
-    <Button
-      type='button'
-      variant='ghost'
-      size='icon-sm'
-      className='text-muted-foreground mr-1 cursor-grab touch-none align-middle active:cursor-grabbing'
-      aria-label={label}
-      title={label}
-      // The pointer must not reach the row's own handlers, or starting a drag would
-      // also focus/activate whatever sits underneath the grip.
-      onPointerDown={(event) => {
-        event.stopPropagation()
-        controls.start(event)
-      }}
-      onKeyDown={(event) => {
-        if (!onMove) return
-        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
-        event.preventDefault()
-        onMove(event.key === 'ArrowUp' ? 'up' : 'down')
-      }}
-    >
-      <GripVertical className='h-4 w-4' aria-hidden='true' />
-    </Button>
+    <TableRow className={getRowClassName?.(row, index)}>
+      {columns.map((column) => (
+        <TableCell
+          key={column.id}
+          className={cn(
+            'max-w-full min-w-0 overflow-hidden',
+            getStaticCellClassName(column, row, index)
+          )}
+        >
+          {renderStaticCellContent(column, row, index)}
+        </TableCell>
+      ))}
+    </TableRow>
   )
 }
 

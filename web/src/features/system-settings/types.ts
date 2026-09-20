@@ -261,7 +261,6 @@ export type ModelSettings = {
   TopupGroupRatio: string
   GroupRatio: string
   UserUsableGroups: string
-  GroupOrder: string
   GroupGroupRatio: string
   AutoGroups: string
   MaxTokenAutoGroups: number
@@ -302,7 +301,6 @@ export type BillingSettings = {
   TopupGroupRatio: string
   GroupRatio: string
   UserUsableGroups: string
-  GroupOrder: string
   GroupGroupRatio: string
   AutoGroups: string
   MaxTokenAutoGroups: number

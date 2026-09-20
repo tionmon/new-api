@@ -28,7 +28,6 @@ function PricingFixture({
     GroupRatio: '{"default":1}',
     TopupGroupRatio: '{}',
     UserUsableGroups: '{}',
-    GroupOrder: '[]',
   },
 }: {
   initial?: Record<string, string>
@@ -43,7 +42,6 @@ function PricingFixture({
         groupRatio={settings.GroupRatio}
         topupGroupRatio={settings.TopupGroupRatio}
         userUsableGroups={settings.UserUsableGroups}
-        groupOrder={settings.GroupOrder}
         groupGroupRatio='{}'
         autoGroups='[]'
         maxTokenAutoGroupsField={null}
@@ -58,60 +56,115 @@ function PricingFixture({
 }
 
 function savedSettings() {
-  return JSON.parse(
-    screen.getByRole('status', { name: 'Saved ratios' }).textContent ?? '{}'
+  // 直接读 DOM：详情面板打开时 base-ui 会给面板外的内容加 aria-hidden，role 查询就
+  // 找不到这个 output 了。
+  const output = document.querySelector('output[aria-label="Saved ratios"]')
+  assert(output)
+  return JSON.parse(output.textContent ?? '{}')
+}
+
+function savedGroupNames() {
+  return Object.keys(JSON.parse(savedSettings().GroupRatio))
+}
+
+/** 卡片序 = 保存下来的 GroupRatio 键序，两边应当永远同序。 */
+function cardNames() {
+  const list = document.querySelector('#group-pricing-order-affordance')
+  assert(list)
+  return [...list.querySelectorAll('li')].map(
+    (item) => item.querySelector('span[title]')?.getAttribute('title') ?? ''
   )
 }
 
-function dataRow(index: number) {
-  // Row 0 is the header row.
-  return screen.getAllByRole('row')[index + 1]
+function card(name: string) {
+  const title = [...document.querySelectorAll('span[title]')].find(
+    (element) => element.getAttribute('title') === name
+  )
+  const item = title?.closest('li')
+  assert(item)
+  return item
 }
 
 const twoGroups = {
   GroupRatio: '{"a":1,"b":1}',
   TopupGroupRatio: '{}',
   UserUsableGroups: '{}',
-  GroupOrder: '[]',
 }
 
-test('renders groups in the saved display order', () => {
-  render(<PricingFixture initial={{ ...twoGroups, GroupOrder: '["b","a"]' }} />)
+test('renders the cards in GroupRatio key order', () => {
+  render(<PricingFixture initial={{ ...twoGroups }} />)
 
-  expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
-  expect(within(dataRow(1)).getByDisplayValue('a')).toBeTruthy()
+  expect(cardNames()).toEqual(['a', 'b'])
 })
 
-test('moving a group up reorders the rows and saves the display order', async () => {
+test('moving a group up reorders the cards and the saved GroupRatio keys with them', async () => {
   const user = userEvent.setup()
   render(<PricingFixture initial={twoGroups} />)
 
-  // 行内按钮顺序是：拖拽把手、上移、下移、详情、删除——把手也是 button，先排除它。
-  const moveUp = within(dataRow(1))
-    .getAllByRole('button')
-    .find((button) => !button.querySelector('svg.lucide-grip-vertical'))
-  if (!moveUp) throw new Error('row has no move-up button')
-  await user.click(moveUp)
+  await user.click(within(card('b')).getByRole('button', { name: 'Move b up' }))
 
-  expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
-  expect(JSON.parse(savedSettings().GroupOrder)).toEqual(['b', 'a'])
+  expect(cardNames()).toEqual(['b', 'a'])
+  expect(savedGroupNames()).toEqual(['b', 'a'])
 })
 
-test('a group added later follows the ordered groups', () => {
+test('a group that only appears in UserUsableGroups follows the ratio groups', () => {
   render(
     <PricingFixture
       initial={{
         GroupRatio: '{"a":1,"b":2}',
         TopupGroupRatio: '{}',
         UserUsableGroups: '{"newcomer":"latest"}',
-        GroupOrder: '["b"]',
       }}
     />
   )
 
-  expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
-  expect(within(dataRow(1)).getByDisplayValue('a')).toBeTruthy()
-  expect(within(dataRow(2)).getByDisplayValue('newcomer')).toBeTruthy()
+  expect(cardNames()).toEqual(['a', 'b', 'newcomer'])
+})
+
+test('adding a group names it in the detail sheet and appends it as the last card', async () => {
+  const user = userEvent.setup()
+  render(<PricingFixture initial={twoGroups} />)
+
+  await user.click(screen.getByRole('button', { name: 'Add group' }))
+
+  const nameInput = screen.getByLabelText('Group name')
+  await user.clear(nameInput)
+  await user.type(nameInput, 'vip')
+  await user.click(screen.getByRole('button', { name: 'Add' }))
+
+  expect(cardNames()).toEqual(['a', 'b', 'vip'])
+  expect(savedGroupNames()).toEqual(['a', 'b', 'vip'])
+})
+
+test('renaming in the detail sheet renames the card and its ratio key', async () => {
+  const user = userEvent.setup()
+  render(<PricingFixture initial={twoGroups} />)
+
+  await user.click(within(card('a')).getByRole('button', { name: 'Details' }))
+
+  const nameInput = screen.getByLabelText('Group name')
+  expect(nameInput).toHaveValue('a')
+  await user.clear(nameInput)
+  await user.type(nameInput, 'standard')
+  await user.click(screen.getByRole('button', { name: 'Rename' }))
+
+  expect(cardNames()).toEqual(['standard', 'b'])
+  expect(savedGroupNames()).toEqual(['standard', 'b'])
+})
+
+test('a name another group already uses cannot be committed', async () => {
+  const user = userEvent.setup()
+  render(<PricingFixture initial={twoGroups} />)
+
+  await user.click(within(card('a')).getByRole('button', { name: 'Details' }))
+
+  const nameInput = screen.getByLabelText('Group name')
+  await user.clear(nameInput)
+  await user.type(nameInput, 'b')
+
+  expect(screen.getByText('This group name is already in use.')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Rename' })).toBeDisabled()
+  expect(cardNames()).toEqual(['a', 'b'])
 })
 
 test.each([
@@ -122,11 +175,8 @@ test.each([
   async (key, index) => {
     const user = userEvent.setup()
     render(<PricingFixture />)
-    const row = screen.getByDisplayValue('default').closest('tr')
-    assert(row)
-    const input = within(row).getAllByRole('spinbutton')[
-      index
-    ] as HTMLInputElement
+    const ratioInputs = within(card('default')).getAllByRole('spinbutton')
+    const input = ratioInputs[index] as HTMLInputElement
     fireEvent.change(input, { target: { value: '0.0' } })
     expect(input.value).toBe('0.0')
     await user.clear(input)

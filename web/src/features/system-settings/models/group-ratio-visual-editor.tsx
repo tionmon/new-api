@@ -18,8 +18,6 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import {
   AlertTriangle,
-  ArrowDown,
-  ArrowUp,
   ChevronDown,
   Search,
   X,
@@ -33,6 +31,7 @@ import {
   useMemo,
   useEffect,
   useCallback,
+  useRef,
   memo,
   type Key,
   type ReactNode,
@@ -84,7 +83,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
-import { sortGroupNames } from '@/lib/group-order'
 
 import { safeJsonParse } from '../utils/json-parser'
 import { GroupSpecialUsableRulesEditor } from './group-special-usable-editor'
@@ -102,8 +100,6 @@ type GroupRatioVisualEditorProps = {
   groupRatio: string
   topupGroupRatio: string
   userUsableGroups: string
-  /** 用户侧看到的顺序；后台表格的行序即它的初始值。 */
-  groupOrder: string
   groupGroupRatio: string
   autoGroups: string
   maxTokenAutoGroupsField: ReactNode
@@ -153,10 +149,6 @@ function parseUsableMap(value: string): Record<string, string> {
   })
 }
 
-function parseGroupOrder(value: string): string[] {
-  return safeJsonParse<string[]>(value, { fallback: [], silent: true })
-}
-
 function parseNestedRatioMap(
   value: string
 ): Record<string, Record<string, number>> {
@@ -169,8 +161,7 @@ function parseNestedRatioMap(
 function buildGroupPricingRows(
   groupRatio: string,
   userUsableGroups: string,
-  topupGroupRatio: string,
-  groupOrder: string
+  topupGroupRatio: string
 ): GroupPricingRow[] {
   const ratioMap = parseRatioMap(groupRatio)
   const usableMap = parseUsableMap(userUsableGroups)
@@ -181,28 +172,26 @@ function buildGroupPricingRows(
     ...Object.keys(topupMap),
   ])
 
-  return sortGroupNames([...names], parseGroupOrder(groupOrder)).map(
-    (name) => ({
-      _id: createGroupPricingId(),
-      name,
-      ratio: String(normalizeRatio(ratioMap[name])),
-      topupRatio: Object.hasOwn(topupMap, name) ? String(topupMap[name]) : '',
-      selectable: Object.hasOwn(usableMap, name),
-      description: String(usableMap[name] ?? ''),
-    })
-  )
+  // 卡片序 = GroupRatio 的书写顺序（Set 保留 Object.keys 的插入序），也就是这个顺序
+  // 的唯一真相：保存时按卡片序写回键序，用户侧接口由后端读同一串 JSON 的键序。
+  return [...names].map((name) => ({
+    _id: createGroupPricingId(),
+    name,
+    ratio: String(normalizeRatio(ratioMap[name])),
+    topupRatio: Object.hasOwn(topupMap, name) ? String(topupMap[name]) : '',
+    selectable: Object.hasOwn(usableMap, name),
+    description: String(usableMap[name] ?? ''),
+  }))
 }
 
 function serializeGroupPricingRows(rows: GroupPricingRow[]) {
   const groupRatio: Record<string, number> = {}
   const userUsableGroups: Record<string, string> = {}
   const topupGroupRatio: Record<string, number> = {}
-  const groupOrder: string[] = []
 
   for (const row of rows) {
     const name = row.name.trim()
     if (!name) continue
-    groupOrder.push(name)
     groupRatio[name] = normalizeRatio(row.ratio)
     if (row.selectable) {
       userUsableGroups[name] = row.description
@@ -217,7 +206,6 @@ function serializeGroupPricingRows(rows: GroupPricingRow[]) {
     GroupRatio: JSON.stringify(groupRatio, null, 2),
     UserUsableGroups: JSON.stringify(userUsableGroups, null, 2),
     TopupGroupRatio: JSON.stringify(topupGroupRatio, null, 2),
-    GroupOrder: JSON.stringify(groupOrder, null, 2),
   }
 }
 
@@ -227,21 +215,18 @@ function groupPricingSignature(rows: GroupPricingRow[]): string {
     groupRatio: parseRatioMap(serialized.GroupRatio),
     userUsableGroups: parseUsableMap(serialized.UserUsableGroups),
     topupGroupRatio: parseRatioMap(serialized.TopupGroupRatio),
-    groupOrder: parseGroupOrder(serialized.GroupOrder),
   })
 }
 
 function sourceGroupPricingSignature(
   groupRatio: string,
   userUsableGroups: string,
-  topupGroupRatio: string,
-  groupOrder: string
+  topupGroupRatio: string
 ): string {
   return JSON.stringify({
     groupRatio: parseRatioMap(groupRatio),
     userUsableGroups: parseUsableMap(userUsableGroups),
     topupGroupRatio: parseRatioMap(topupGroupRatio),
-    groupOrder: parseGroupOrder(groupOrder),
   })
 }
 
@@ -292,7 +277,6 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
   groupRatio,
   topupGroupRatio,
   userUsableGroups,
-  groupOrder,
   groupGroupRatio,
   autoGroups,
   maxTokenAutoGroupsField,
@@ -301,7 +285,6 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
 }: GroupRatioVisualEditorProps) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
-  const [detailGroup, setDetailGroup] = useState<string | null>(null)
 
   const registry = useMemo<RegistryEntry[]>(() => {
     const ratioMap = parseRatioMap(groupRatio)
@@ -386,13 +369,15 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         </TabsList>
       </div>
       <TabsContent value='pricing' keepMounted>
-        <GroupPricingTable
+        <GroupPricingList
           groupRatio={groupRatio}
           userUsableGroups={userUsableGroups}
           topupGroupRatio={topupGroupRatio}
-          groupOrder={groupOrder}
+          registry={registry}
+          groupGroupRatio={groupGroupRatio}
+          autoGroups={autoGroupsList}
+          groupSpecialUsableGroup={groupSpecialUsableGroup}
           onChange={onChange}
-          onShowDetail={setDetailGroup}
         />
       </TabsContent>
       <TabsContent value='overrides' keepMounted>
@@ -475,57 +460,68 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
           </CardContent>
         </Card>
       </TabsContent>
-
-      <GroupDetailSheet
-        groupName={detailGroup}
-        onOpenChange={(open) => {
-          if (!open) setDetailGroup(null)
-        }}
-        registry={registry}
-        topupGroupRatio={topupGroupRatio}
-        userUsableGroups={userUsableGroups}
-        groupGroupRatio={groupGroupRatio}
-        autoGroups={autoGroupsList}
-        groupSpecialUsableGroup={groupSpecialUsableGroup}
-      />
     </Tabs>
   )
 })
 
-type GroupPricingTableProps = {
+type GroupPricingListProps = {
   groupRatio: string
   userUsableGroups: string
   topupGroupRatio: string
-  groupOrder: string
+  registry: RegistryEntry[]
+  groupGroupRatio: string
+  autoGroups: string[]
+  groupSpecialUsableGroup: string
   onChange: (field: string, value: string) => void
-  onShowDetail: (name: string) => void
 }
 
-function GroupPricingTable({
+/** 详情面板此刻指向谁：关着、正在起名的新分组、还是某个已有分组。 */
+type GroupDetailTarget =
+  | { kind: 'closed' }
+  | { kind: 'new'; draftName: string }
+  | { kind: 'existing'; rowId: string; name: string }
+
+function nextDefaultGroupName(rows: GroupPricingRow[]): string {
+  const taken = new Set(rows.map((row) => row.name.trim()))
+  let index = 1
+  while (taken.has(`group_${index}`)) index += 1
+  return `group_${index}`
+}
+
+/** 卡片里的一格：上面小标签，下面控件。四格等宽固定列，跨卡片左边缘对齐。 */
+function GroupPricingCardField(props: { label: string; children: ReactNode }) {
+  return (
+    <div className='flex min-w-0 flex-col gap-1'>
+      <span className='text-muted-foreground text-xs'>{props.label}</span>
+      {props.children}
+    </div>
+  )
+}
+
+function GroupPricingList({
   groupRatio,
   userUsableGroups,
   topupGroupRatio,
-  groupOrder,
+  registry,
+  groupGroupRatio,
+  autoGroups,
+  groupSpecialUsableGroup,
   onChange,
-  onShowDetail,
-}: GroupPricingTableProps) {
+}: GroupPricingListProps) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  const [detailTarget, setDetailTarget] = useState<GroupDetailTarget>({
+    kind: 'closed',
+  })
   const [rows, setRows] = useState<GroupPricingRow[]>(() =>
-    buildGroupPricingRows(
-      groupRatio,
-      userUsableGroups,
-      topupGroupRatio,
-      groupOrder
-    )
+    buildGroupPricingRows(groupRatio, userUsableGroups, topupGroupRatio)
   )
 
   useEffect(() => {
     const incomingSignature = sourceGroupPricingSignature(
       groupRatio,
       userUsableGroups,
-      topupGroupRatio,
-      groupOrder
+      topupGroupRatio
     )
     setRows((currentRows) => {
       if (groupPricingSignature(currentRows) === incomingSignature) {
@@ -534,11 +530,10 @@ function GroupPricingTable({
       return buildGroupPricingRows(
         groupRatio,
         userUsableGroups,
-        topupGroupRatio,
-        groupOrder
+        topupGroupRatio
       )
     })
-  }, [groupRatio, userUsableGroups, topupGroupRatio, groupOrder])
+  }, [groupRatio, userUsableGroups, topupGroupRatio])
 
   const emitRows = useCallback(
     (nextRows: GroupPricingRow[]) => {
@@ -547,25 +542,8 @@ function GroupPricingTable({
       onChange('GroupRatio', serialized.GroupRatio)
       onChange('UserUsableGroups', serialized.UserUsableGroups)
       onChange('TopupGroupRatio', serialized.TopupGroupRatio)
-      onChange('GroupOrder', serialized.GroupOrder)
     },
     [onChange]
-  )
-
-  // 按 id 而不是按下标移动：表格被搜索过滤时，行内的 index 是「可见序」下标，
-  // 拿它当 rows 下标会移错行。
-  const moveRow = useCallback(
-    (id: string, delta: number) => {
-      const from = rows.findIndex((row) => row._id === id)
-      const to = from + delta
-      if (from < 0 || to < 0 || to >= rows.length) return
-      const nextRows = [...rows]
-      const [moved] = nextRows.splice(from, 1)
-      if (!moved) return
-      nextRows.splice(to, 0, moved)
-      emitRows(nextRows)
-    },
-    [emitRows, rows]
   )
 
   const updateRow = useCallback(
@@ -581,27 +559,11 @@ function GroupPricingTable({
     [emitRows, rows]
   )
 
-  const addRow = useCallback(() => {
+  // 「添加分组」不再凭空造一行 group_N：先开详情面板起名，名字定了才落卡片。
+  const startCreate = useCallback(() => {
     setSearch('')
-    const existingNames = new Set(rows.map((row) => row.name))
-    let index = 1
-    let name = `group_${index}`
-    while (existingNames.has(name)) {
-      index += 1
-      name = `group_${index}`
-    }
-    emitRows([
-      ...rows,
-      {
-        _id: createGroupPricingId(),
-        name,
-        ratio: '1',
-        topupRatio: '',
-        selectable: true,
-        description: '',
-      },
-    ])
-  }, [emitRows, rows])
+    setDetailTarget({ kind: 'new', draftName: nextDefaultGroupName(rows) })
+  }, [rows])
 
   const removeRow = useCallback(
     (id: string) => {
@@ -610,16 +572,34 @@ function GroupPricingTable({
     [emitRows, rows]
   )
 
+  // 卡片上的删除键把分组名交回来（官方组件只认识名字），这里翻回行 id。
+  const removeRowByName = useCallback(
+    (name: string) => {
+      const target = rows.find((row) => row.name.trim() === name)
+      if (!target) return
+      removeRow(target._id)
+    },
+    [removeRow, rows]
+  )
+
   const duplicateNames = useMemo(() => {
     const counts = new Map<string, number>()
+    let blank = false
     for (const row of rows) {
       const name = row.name.trim()
-      if (!name) continue
+      if (!name) {
+        blank = true
+        continue
+      }
       counts.set(name, (counts.get(name) ?? 0) + 1)
     }
-    return [...counts.entries()]
-      .filter(([, count]) => count > 1)
-      .map(([name]) => name)
+    return {
+      duplicates: [...counts.entries()]
+        .filter(([, count]) => count > 1)
+        .map(([name]) => name),
+      // 无名分组排不了序也存不进 GroupRatio（键不能是空串），只能在详情面板里补个名字。
+      blank,
+    }
   }, [rows])
 
   const query = search.trim().toLowerCase()
@@ -630,27 +610,106 @@ function GroupPricingTable({
       row.description.toLowerCase().includes(query)
   )
 
-  // motion 的 Reorder 交回的是「它看到的那些行」的新顺序。没搜索时就是整表顺序；
-  // 搜索时只把被筛出来的位置按新顺序回填，未显示的行留在原处。
-  const reorderRows = useCallback(
-    (orderedIds: Key[]) => {
-      const byId = new Map(rows.map((row) => [row._id, row]))
-      const ordered = orderedIds
-        .map((id) => byId.get(String(id)))
-        .filter((row): row is GroupPricingRow => row !== undefined)
-      if (ordered.length !== orderedIds.length) return
+  // 搜索时列表只显示命中的卡片，但顺序仍然只能按整表来记：把新顺序填回被筛出来的
+  // 那些位置，未显示的行留在原处。
+  const applyVisibleOrder = useCallback(
+    (nextVisible: GroupPricingRow[]) => {
       if (!query) {
-        emitRows(ordered)
+        emitRows(nextVisible)
         return
       }
       const visibleIds = new Set(visibleRows.map((row) => row._id))
       let next = 0
       emitRows(
-        rows.map((row) => (visibleIds.has(row._id) ? ordered[next++] : row))
+        rows.map((row) => (visibleIds.has(row._id) ? nextVisible[next++] : row))
       )
     },
     [emitRows, query, rows, visibleRows]
   )
+
+  // 官方卡片拿分组名当拖拽值，所以这里也按名字回推行。名字空或重名时不动：那个状态
+  // 下名字无法唯一指认一张卡片，拖了也只会移错。
+  const reorderRows = useCallback(
+    (orderedNames: Key[]) => {
+      const names = visibleRows.map((row) => row.name.trim())
+      const byName = new Map(
+        names.map((name, index) => [name, visibleRows[index]])
+      )
+      if (names.some((name) => !name) || byName.size !== names.length) return
+      const ordered = orderedNames
+        .map((name) => byName.get(String(name)))
+        .filter((row): row is GroupPricingRow => row !== undefined)
+      if (ordered.length !== orderedNames.length) return
+      applyVisibleOrder(ordered)
+    },
+    [applyVisibleOrder, visibleRows]
+  )
+
+  // 上下键交给的是「可见序」下标（卡片里看到的位次），不是整表下标。
+  const moveVisibleRow = useCallback(
+    (index: number, direction: 'up' | 'down') => {
+      const to = direction === 'up' ? index - 1 : index + 1
+      const moved = visibleRows[index]
+      const swapped = visibleRows[to]
+      if (!moved || !swapped) return
+      const nextVisible = [...visibleRows]
+      nextVisible[index] = swapped
+      nextVisible[to] = moved
+      applyVisibleOrder(nextVisible)
+    },
+    [applyVisibleOrder, visibleRows]
+  )
+
+  const openDetail = useCallback((row: GroupPricingRow) => {
+    setDetailTarget({
+      kind: 'existing',
+      rowId: row._id,
+      name: row.name.trim(),
+    })
+  }, [])
+
+  const commitName = useCallback(
+    (nextName: string) => {
+      if (detailTarget.kind === 'existing') {
+        // 面板开着的时候行可能被外部刷新掉（并发保存 / 拉配置）。认不出行就当没这回事，
+        // 别一边说改名成功、一边什么都没改。
+        const target =
+          rows.find((row) => row._id === detailTarget.rowId) ??
+          rows.find((row) => row.name.trim() === detailTarget.name)
+        if (!target) {
+          setDetailTarget({ kind: 'closed' })
+          return
+        }
+        updateRow(target._id, 'name', nextName)
+        setDetailTarget({ kind: 'existing', rowId: target._id, name: nextName })
+        return
+      }
+      if (detailTarget.kind === 'new') {
+        const id = createGroupPricingId()
+        emitRows([
+          ...rows,
+          {
+            _id: id,
+            name: nextName,
+            ratio: '1',
+            topupRatio: '',
+            selectable: true,
+            description: '',
+          },
+        ])
+        setDetailTarget({ kind: 'existing', rowId: id, name: nextName })
+      }
+    },
+    [detailTarget, emitRows, rows, updateRow]
+  )
+
+  // 重名判定要排开自己：改回原名不算重名，只是没改动。
+  const siblingNames = useMemo(() => {
+    const own = detailTarget.kind === 'existing' ? detailTarget.name : ''
+    return rows
+      .map((row) => row.name.trim())
+      .filter((name) => name !== '' && name !== own)
+  }, [detailTarget, rows])
 
   return (
     <Card className={sectionCardClassName}>
@@ -664,7 +723,7 @@ function GroupPricingTable({
               )}
             </CardDescription>
           </div>
-          <Button onClick={addRow} size='sm' className='sm:self-start'>
+          <Button onClick={startCreate} size='sm' className='sm:self-start'>
             <Plus className='mr-2 h-4 w-4' />
             {t('Add group')}
           </Button>
@@ -694,201 +753,119 @@ function GroupPricingTable({
               </InputGroupAddon>
             )}
           </InputGroup>
-          <StaticDataTable
-            tableClassName='min-w-[860px]'
-            // 浏览器检查靠这个 id 定位这张表（官方的重构里没有它）。
-            containerProps={{ id: 'group-pricing-order-affordance' }}
-            reorder={{
-              values: visibleRows.map((row) => row._id),
-              onReorder: reorderRows,
-              labelFor: (id) =>
-                t('Drag {{group}} to reorder', {
-                  group:
-                    rows.find((row) => row._id === id)?.name.trim() ||
-                    t('Group name'),
-                }),
-              onMove: (id, direction) =>
-                moveRow(String(id), direction === 'up' ? -1 : 1),
-            }}
-            tableProps={{ 'aria-label': t('Pricing groups') }}
-            data={visibleRows}
-            getRowKey={(row) => row._id}
-            emptyClassName='text-muted-foreground h-20 text-sm'
-            emptyContent={
-              <EmptyState
-                className='min-h-40'
-                title={
-                  query
-                    ? t('No results found')
-                    : t('No groups yet. Add a group to get started.')
-                }
-                action={
-                  query ? (
+          {visibleRows.length === 0 ? (
+            <EmptyState
+              className='min-h-40'
+              title={
+                query
+                  ? t('No results found')
+                  : t('No groups yet. Add a group to get started.')
+              }
+              action={
+                query ? (
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setSearch('')}
+                  >
+                    {t('Clear search')}
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <Reorder.Group
+              as='ol'
+              axis='y'
+              id='group-pricing-order-affordance'
+              values={visibleRows.map((row) => row.name.trim())}
+              onReorder={reorderRows}
+              aria-label={t('Pricing groups')}
+              className='flex flex-col gap-2'
+            >
+              {visibleRows.map((row, index) => (
+                <AutoGroupOrderItem
+                  key={row._id}
+                  group={row.name.trim()}
+                  index={index}
+                  count={visibleRows.length}
+                  onMove={moveVisibleRow}
+                  onRemove={removeRowByName}
+                >
+                  {/* w-full：借官方的 flex-wrap 把自己顶到独立一行，
+                      左边缘与分组名对齐，四格跨卡片等宽。 */}
+                  <div className='grid w-full grid-cols-2 items-end gap-3 sm:grid-cols-[7rem_7rem_7rem_minmax(0,1fr)_auto]'>
+                    <GroupPricingCardField label={t('Ratio')}>
+                      <Input
+                        type='number'
+                        min={0}
+                        step={0.0001}
+                        value={row.ratio}
+                        aria-label={t('Ratio')}
+                        onChange={(event) =>
+                          updateRow(row._id, 'ratio', event.target.value)
+                        }
+                      />
+                    </GroupPricingCardField>
+                    <GroupPricingCardField label={t('Top-up ratio')}>
+                      <Input
+                        type='number'
+                        min={0}
+                        step={0.0001}
+                        value={row.topupRatio}
+                        aria-label={t('Top-up ratio')}
+                        placeholder={t('Not set')}
+                        onChange={(event) =>
+                          updateRow(row._id, 'topupRatio', event.target.value)
+                        }
+                      />
+                    </GroupPricingCardField>
+                    <GroupPricingCardField label={t('User selectable')}>
+                      <div className='flex h-9 items-center'>
+                        <Checkbox
+                          checked={row.selectable}
+                          onCheckedChange={(checked) =>
+                            updateRow(row._id, 'selectable', checked === true)
+                          }
+                          aria-label={t('User selectable')}
+                        />
+                      </div>
+                    </GroupPricingCardField>
+                    <GroupPricingCardField label={t('Description')}>
+                      {row.selectable ? (
+                        <Input
+                          value={row.description}
+                          aria-label={t('Group description')}
+                          placeholder={t('Group description')}
+                          onChange={(event) =>
+                            updateRow(
+                              row._id,
+                              'description',
+                              event.target.value
+                            )
+                          }
+                        />
+                      ) : (
+                        <span className='text-muted-foreground flex h-9 items-center px-3 text-sm'>
+                          -
+                        </span>
+                      )}
+                    </GroupPricingCardField>
                     <Button
                       variant='outline'
                       size='sm'
-                      onClick={() => setSearch('')}
-                    >
-                      {t('Clear search')}
-                    </Button>
-                  ) : undefined
-                }
-              />
-            }
-            columns={[
-              {
-                id: 'order',
-                header: t('Sort Order'),
-                className: 'w-28',
-                // 把手由表格渲染：motion 的拖拽控制必须待在被移动的那一行内部。
-                dragHandle: true,
-                cell: (row) => {
-                  const rowIndex = rows.findIndex(
-                    (item) => item._id === row._id
-                  )
-                  return (
-                    <div className='flex items-center gap-0.5'>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        disabled={rowIndex <= 0}
-                        onClick={() => moveRow(row._id, -1)}
-                        aria-label={t('Move {{group}} up', {
-                          group: row.name.trim() || t('Group name'),
-                        })}
-                      >
-                        <ArrowUp className='h-4 w-4' />
-                      </Button>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        disabled={rowIndex < 0 || rowIndex >= rows.length - 1}
-                        onClick={() => moveRow(row._id, 1)}
-                        aria-label={t('Move {{group}} down', {
-                          group: row.name.trim() || t('Group name'),
-                        })}
-                      >
-                        <ArrowDown className='h-4 w-4' />
-                      </Button>
-                    </div>
-                  )
-                },
-              },
-              {
-                id: 'group',
-                header: t('Group name'),
-                className: 'min-w-40',
-                cell: (row) => (
-                  <Input
-                    value={row.name}
-                    aria-label={t('Group name')}
-                    onChange={(event) =>
-                      updateRow(row._id, 'name', event.target.value)
-                    }
-                    aria-invalid={duplicateNames.includes(row.name.trim())}
-                  />
-                ),
-              },
-              {
-                id: 'ratio',
-                header: t('Ratio'),
-                className: 'w-28',
-                cell: (row) => (
-                  <Input
-                    type='number'
-                    min={0}
-                    step={0.0001}
-                    value={row.ratio}
-                    aria-label={t('Ratio')}
-                    onChange={(event) =>
-                      updateRow(row._id, 'ratio', event.target.value)
-                    }
-                  />
-                ),
-              },
-              {
-                id: 'topup-ratio',
-                header: t('Top-up ratio'),
-                className: 'w-28',
-                cell: (row) => (
-                  <Input
-                    type='number'
-                    min={0}
-                    step={0.0001}
-                    value={row.topupRatio}
-                    aria-label={t('Top-up ratio')}
-                    placeholder={t('Not set')}
-                    onChange={(event) =>
-                      updateRow(row._id, 'topupRatio', event.target.value)
-                    }
-                  />
-                ),
-              },
-              {
-                id: 'selectable',
-                header: t('User selectable'),
-                className: 'w-28 text-center',
-                cell: (row) => (
-                  <div className='flex justify-center'>
-                    <Checkbox
-                      checked={row.selectable}
-                      onCheckedChange={(checked) =>
-                        updateRow(row._id, 'selectable', checked === true)
-                      }
-                      aria-label={t('User selectable')}
-                    />
-                  </div>
-                ),
-              },
-              {
-                id: 'description',
-                header: t('Description'),
-                className: 'min-w-56',
-                cell: (row) =>
-                  row.selectable ? (
-                    <Input
-                      value={row.description}
-                      aria-label={t('Group description')}
-                      placeholder={t('Group description')}
-                      onChange={(event) =>
-                        updateRow(row._id, 'description', event.target.value)
-                      }
-                    />
-                  ) : (
-                    <span className='text-muted-foreground px-3 text-sm'>
-                      -
-                    </span>
-                  ),
-              },
-              {
-                id: 'actions',
-                header: t('Actions'),
-                className: 'text-right',
-                cellClassName: 'text-right',
-                cell: (row) => (
-                  <div className='flex justify-end gap-1'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onShowDetail(row.name.trim())}
-                      disabled={!row.name.trim()}
+                      className='justify-self-start'
+                      onClick={() => openDetail(row)}
                       aria-label={t('Details')}
                     >
                       <Info className='h-4 w-4' />
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => removeRow(row._id)}
-                      aria-label={t('Delete')}
-                    >
-                      <Trash2 className='h-4 w-4' />
+                      {t('Details')}
                     </Button>
                   </div>
-                ),
-              },
-            ]}
-          />
+                </AutoGroupOrderItem>
+              ))}
+            </Reorder.Group>
+          )}
 
           <p className='text-muted-foreground text-sm'>
             {t(
@@ -896,15 +873,38 @@ function GroupPricingTable({
             )}
           </p>
 
-          {duplicateNames.length > 0 && (
+          {duplicateNames.duplicates.length > 0 && (
             <p className='text-destructive text-sm'>
               {t('Duplicate group names: {{names}}', {
-                names: duplicateNames.join(', '),
+                names: duplicateNames.duplicates.join(', '),
               })}
+            </p>
+          )}
+
+          {duplicateNames.blank && (
+            <p className='text-destructive text-sm'>
+              {t(
+                'A group with no name cannot be saved. Open its details to name it.'
+              )}
             </p>
           )}
         </div>
       </CardContent>
+
+      <GroupDetailSheet
+        target={detailTarget}
+        onOpenChange={(open) => {
+          if (!open) setDetailTarget({ kind: 'closed' })
+        }}
+        onRename={commitName}
+        siblingNames={siblingNames}
+        registry={registry}
+        topupGroupRatio={topupGroupRatio}
+        userUsableGroups={userUsableGroups}
+        groupGroupRatio={groupGroupRatio}
+        autoGroups={autoGroups}
+        groupSpecialUsableGroup={groupSpecialUsableGroup}
+      />
     </Card>
   )
 }
@@ -1382,8 +1382,12 @@ function GroupOverrideDialog({
 }
 
 type GroupDetailSheetProps = {
-  groupName: string | null
+  target: GroupDetailTarget
   onOpenChange: (open: boolean) => void
+  /** 提交分组名：新建时建卡片，改名时改卡片。 */
+  onRename: (name: string) => void
+  /** 别处已占用的名字，用来拦重名（不含自己）。 */
+  siblingNames: string[]
   registry: RegistryEntry[]
   topupGroupRatio: string
   userUsableGroups: string
@@ -1413,7 +1417,31 @@ function parseSpecialGroupKey(rawKey: string): {
 
 function GroupDetailSheet(props: GroupDetailSheetProps) {
   const { t } = useTranslation()
-  const name = props.groupName
+  const isNew = props.target.kind === 'new'
+  const name = props.target.kind === 'existing' ? props.target.name : ''
+  const open = props.target.kind !== 'closed'
+  const [draft, setDraft] = useState(name)
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  // 换目标（含「添加分组」）就把草稿重置成当前名字，别把上一张卡片的名字带过来。
+  useEffect(() => {
+    setDraft(
+      isNew && props.target.kind === 'new' ? props.target.draftName : name
+    )
+  }, [isNew, name, props.target])
+
+  // 新建时把默认名字整段选中，用户直接打字就是改名；面板接管焦点的那一刻会落下
+  // 光标，所以选中要排到那一帧之后。
+  useEffect(() => {
+    if (!open || !isNew) return
+    const frame = requestAnimationFrame(() => nameInputRef.current?.select())
+    return () => cancelAnimationFrame(frame)
+  }, [open, isNew])
+
+  const trimmedDraft = draft.trim()
+  const duplicate =
+    trimmedDraft !== '' && props.siblingNames.includes(trimmedDraft)
+  const canCommit = trimmedDraft !== '' && !duplicate && trimmedDraft !== name
 
   const detail = useMemo(() => {
     if (!name) return null
@@ -1478,14 +1506,15 @@ function GroupDetailSheet(props: GroupDetailSheetProps) {
   ])
 
   return (
-    <Sheet open={name !== null} onOpenChange={props.onOpenChange}>
+    <Sheet open={open} onOpenChange={props.onOpenChange}>
       <SheetContent
         side='right'
         className={sideDrawerContentClassName('sm:max-w-lg')}
+        initialFocus={nameInputRef}
       >
         <SheetHeader className={sideDrawerHeaderClassName()}>
           <SheetTitle>
-            {t('Group details')}
+            {isNew ? t('Add group') : t('Group details')}
             {name ? `: ${name}` : ''}
           </SheetTitle>
           <SheetDescription>
@@ -1493,137 +1522,181 @@ function GroupDetailSheet(props: GroupDetailSheetProps) {
           </SheetDescription>
         </SheetHeader>
 
-        {detail && (
-          <div className={sideDrawerFormClassName('gap-5')}>
-            <section className='space-y-2'>
-              <h3 className='text-sm font-semibold'>{t('Overview')}</h3>
-              <dl className='space-y-1.5 text-sm'>
-                <div className='flex justify-between'>
-                  <dt className='text-muted-foreground'>{t('Ratio')}</dt>
-                  <dd className='font-medium'>{detail.ratio ?? '-'}</dd>
-                </div>
-                <div className='flex justify-between'>
-                  <dt className='text-muted-foreground'>{t('Top-up ratio')}</dt>
-                  <dd className='font-medium'>
-                    {detail.topupRatio ?? t('Not set')}
-                  </dd>
-                </div>
-                <div className='flex justify-between'>
-                  <dt className='text-muted-foreground'>
-                    {t('User selectable')}
-                  </dt>
-                  <dd className='font-medium'>
-                    {detail.selectable ? t('Yes') : t('No')}
-                  </dd>
-                </div>
-                {detail.selectable && detail.description && (
-                  <div className='flex justify-between gap-4'>
+        <div className={sideDrawerFormClassName('gap-5')}>
+          <section className='space-y-2'>
+            <h3 className='text-sm font-semibold'>{t('Group name')}</h3>
+            <div className='flex items-center gap-2'>
+              <Input
+                ref={nameInputRef}
+                value={draft}
+                aria-label={t('Group name')}
+                aria-invalid={duplicate}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && canCommit) {
+                    event.preventDefault()
+                    props.onRename(trimmedDraft)
+                  }
+                }}
+              />
+              <Button
+                size='sm'
+                className='shrink-0'
+                disabled={!canCommit}
+                onClick={() => props.onRename(trimmedDraft)}
+              >
+                {isNew ? t('Add') : t('Rename')}
+              </Button>
+            </div>
+            <p
+              className={
+                duplicate
+                  ? 'text-destructive text-xs'
+                  : 'text-muted-foreground text-xs'
+              }
+            >
+              {duplicate
+                ? t('This group name is already in use.')
+                : t(
+                    'Renaming does not update references in other settings, such as the auto group order.'
+                  )}
+            </p>
+          </section>
+
+          {detail && (
+            <div className='flex flex-col gap-5'>
+              <section className='space-y-2'>
+                <h3 className='text-sm font-semibold'>{t('Overview')}</h3>
+                <dl className='space-y-1.5 text-sm'>
+                  <div className='flex justify-between'>
+                    <dt className='text-muted-foreground'>{t('Ratio')}</dt>
+                    <dd className='font-medium'>{detail.ratio ?? '-'}</dd>
+                  </div>
+                  <div className='flex justify-between'>
                     <dt className='text-muted-foreground'>
-                      {t('Description')}
+                      {t('Top-up ratio')}
                     </dt>
-                    <dd className='text-right font-medium'>
-                      {detail.description}
+                    <dd className='font-medium'>
+                      {detail.topupRatio ?? t('Not set')}
                     </dd>
                   </div>
-                )}
-                <div className='flex justify-between'>
-                  <dt className='text-muted-foreground'>
-                    {t('Auto group order')}
-                  </dt>
-                  <dd className='font-medium'>
-                    {detail.autoIndex >= 0
-                      ? t('Position {{position}}', {
-                          position: detail.autoIndex + 1,
-                        })
-                      : t('Not included')}
-                  </dd>
-                </div>
-              </dl>
-            </section>
+                  <div className='flex justify-between'>
+                    <dt className='text-muted-foreground'>
+                      {t('User selectable')}
+                    </dt>
+                    <dd className='font-medium'>
+                      {detail.selectable ? t('Yes') : t('No')}
+                    </dd>
+                  </div>
+                  {detail.selectable && detail.description && (
+                    <div className='flex justify-between gap-4'>
+                      <dt className='text-muted-foreground'>
+                        {t('Description')}
+                      </dt>
+                      <dd className='text-right font-medium'>
+                        {detail.description}
+                      </dd>
+                    </div>
+                  )}
+                  <div className='flex justify-between'>
+                    <dt className='text-muted-foreground'>
+                      {t('Auto group order')}
+                    </dt>
+                    <dd className='font-medium'>
+                      {detail.autoIndex >= 0
+                        ? t('Position {{position}}', {
+                            position: detail.autoIndex + 1,
+                          })
+                        : t('Not included')}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
 
-            <section className='space-y-2'>
-              <h3 className='text-sm font-semibold'>
-                {t('Ratio overrides when billed as this group')}
-              </h3>
-              {detail.incomingOverrides.length === 0 ? (
-                <p className='text-muted-foreground text-sm'>{t('None')}</p>
-              ) : (
-                <ul className='space-y-1 text-sm'>
-                  {detail.incomingOverrides.map((item) => (
-                    <li
-                      key={item.userGroup}
-                      className='flex justify-between rounded-md border px-3 py-1.5'
-                    >
-                      <span>
-                        {t('Users in {{group}}', { group: item.userGroup })}
-                      </span>
-                      <span className='font-medium'>{item.ratio}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className='space-y-2'>
-              <h3 className='text-sm font-semibold'>
-                {t('Ratio overrides for users of this group')}
-              </h3>
-              {detail.outgoingOverrides.length === 0 ? (
-                <p className='text-muted-foreground text-sm'>{t('None')}</p>
-              ) : (
-                <ul className='space-y-1 text-sm'>
-                  {detail.outgoingOverrides.map((item) => (
-                    <li
-                      key={item.targetGroup}
-                      className='flex justify-between rounded-md border px-3 py-1.5'
-                    >
-                      <span>
-                        {t('When billed as {{group}}', {
-                          group: item.targetGroup,
-                        })}
-                      </span>
-                      <span className='font-medium'>{item.ratio}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className='space-y-2'>
-              <h3 className='text-sm font-semibold'>
-                {t('Special visibility rules')}
-              </h3>
-              {detail.visibilityRules.length === 0 ? (
-                <p className='text-muted-foreground text-sm'>{t('None')}</p>
-              ) : (
-                <ul className='space-y-1 text-sm'>
-                  {detail.visibilityRules.map((rule) => (
-                    <li
-                      key={`${rule.userGroup}-${rule.visible}`}
-                      className='flex items-center justify-between rounded-md border px-3 py-1.5'
-                    >
-                      <span>
-                        {rule.visible
-                          ? t('Extra visible to {{group}}', {
-                              group: rule.userGroup,
-                            })
-                          : t('Hidden from {{group}}', {
-                              group: rule.userGroup,
-                            })}
-                      </span>
-                      <StatusBadge
-                        variant={rule.visible ? 'info' : 'danger'}
-                        copyable={false}
+              <section className='space-y-2'>
+                <h3 className='text-sm font-semibold'>
+                  {t('Ratio overrides when billed as this group')}
+                </h3>
+                {detail.incomingOverrides.length === 0 ? (
+                  <p className='text-muted-foreground text-sm'>{t('None')}</p>
+                ) : (
+                  <ul className='space-y-1 text-sm'>
+                    {detail.incomingOverrides.map((item) => (
+                      <li
+                        key={item.userGroup}
+                        className='flex justify-between rounded-md border px-3 py-1.5'
                       >
-                        {rule.visible ? t('Visible') : t('Hidden')}
-                      </StatusBadge>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-        )}
+                        <span>
+                          {t('Users in {{group}}', { group: item.userGroup })}
+                        </span>
+                        <span className='font-medium'>{item.ratio}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className='space-y-2'>
+                <h3 className='text-sm font-semibold'>
+                  {t('Ratio overrides for users of this group')}
+                </h3>
+                {detail.outgoingOverrides.length === 0 ? (
+                  <p className='text-muted-foreground text-sm'>{t('None')}</p>
+                ) : (
+                  <ul className='space-y-1 text-sm'>
+                    {detail.outgoingOverrides.map((item) => (
+                      <li
+                        key={item.targetGroup}
+                        className='flex justify-between rounded-md border px-3 py-1.5'
+                      >
+                        <span>
+                          {t('When billed as {{group}}', {
+                            group: item.targetGroup,
+                          })}
+                        </span>
+                        <span className='font-medium'>{item.ratio}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className='space-y-2'>
+                <h3 className='text-sm font-semibold'>
+                  {t('Special visibility rules')}
+                </h3>
+                {detail.visibilityRules.length === 0 ? (
+                  <p className='text-muted-foreground text-sm'>{t('None')}</p>
+                ) : (
+                  <ul className='space-y-1 text-sm'>
+                    {detail.visibilityRules.map((rule) => (
+                      <li
+                        key={`${rule.userGroup}-${rule.visible}`}
+                        className='flex items-center justify-between rounded-md border px-3 py-1.5'
+                      >
+                        <span>
+                          {rule.visible
+                            ? t('Extra visible to {{group}}', {
+                                group: rule.userGroup,
+                              })
+                            : t('Hidden from {{group}}', {
+                                group: rule.userGroup,
+                              })}
+                        </span>
+                        <StatusBadge
+                          variant={rule.visible ? 'info' : 'danger'}
+                          copyable={false}
+                        >
+                          {rule.visible ? t('Visible') : t('Hidden')}
+                        </StatusBadge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   )
