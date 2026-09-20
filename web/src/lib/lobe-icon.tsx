@@ -82,30 +82,15 @@ function isIconVariant(value: string): value is IconVariant {
 const variantRequests = new Map<string, Promise<IconComponent | null>>()
 
 /**
- * 动态导入单个变体模块，失败（该图标没有这个变体）时解析为 null。
- *
- * 只导入 components/<Variant>.js 而不是目录的复合入口 index.js：复合入口会把
- * Avatar/Combine 一并纳入模块图，而它们依赖 @lobehub/ui 与 antd-style，
- * 使 chunk 变大、加载变慢（实测复合入口在测试环境需约 10 秒）。
- * Mono/Color/Text 仅依赖 react 与包内常量。
- *
- * webpackInclude 把动态上下文限制在一层图标目录的 components 子目录内。缺了它会退化成
- * es/** 全扫，连带 es/components（Editor 依赖未安装的 svgo-browser）导致构建失败。
+ * 变体导入器本身是个异步模块（见 `lobe-icon-variant.ts`）：它带着一张 1480 键的
+ * 「图标名 → chunk」映射表，只有真要画图标时才用得上，不该进首屏入口 chunk。
+ * 这里只加载一次，之后复用同一个 Promise。
  */
-async function importVariant(
-  baseKey: string,
-  variant: IconVariant
-): Promise<IconComponent | null> {
-  try {
-    const mod = await import(
-      /* webpackInclude: /^\.\/[A-Za-z0-9]+\/components\/(Mono|Color|Text|Avatar|Combine)\.js$/ */
-      `@lobehub/icons/es/${baseKey}/components/${variant}.js`
-    )
-    // 组件可能在 default 上，也可能就是模块命名空间本身
-    return ((mod as { default?: unknown }).default ?? mod) as IconComponent
-  } catch {
-    return null
-  }
+let variantImporter: Promise<typeof import('./lobe-icon-variant')> | null = null
+
+function loadVariantImporter(): Promise<typeof import('./lobe-icon-variant')> {
+  variantImporter ??= import('./lobe-icon-variant')
+  return variantImporter
 }
 
 /**
@@ -121,10 +106,14 @@ function loadVariant(
   const started = variantRequests.get(key)
   if (started) return started
 
-  const request = importVariant(baseKey, variant).then((component) => {
-    if (component || variant === 'Mono') return component
-    return loadVariant(baseKey, 'Mono')
-  })
+  const request = loadVariantImporter()
+    .then((mod) => mod.importIconVariant(baseKey, variant))
+    // 导入器本身没拿到（离线、chunk 被拦）也走回落，不让调用方收到拒绝。
+    .catch(() => null)
+    .then((component) => {
+      if (component || variant === 'Mono') return component
+      return loadVariant(baseKey, 'Mono')
+    })
 
   variantRequests.set(key, request)
   return request

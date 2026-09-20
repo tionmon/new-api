@@ -129,7 +129,7 @@ function startServer({ blockAssets, theme }) {
         body
       )
     } catch {
-      let body = fs
+      const body = fs
         .readFileSync(path.join(DIST, 'index.html'), 'utf8')
         .replace('</body>', `${PROBE}</body>`)
       send(200, 'text/html; charset=utf-8', body)
@@ -176,8 +176,9 @@ async function readDom({ blockAssets, theme, size, tag }) {
   await pause(150)
 
   const match = dom.match(/<title>PROBE(.*?)<\/title>/s)
-  if (!match)
+  if (!match) {
     throw new Error(`${tag}: the probe never reported (title unchanged)`)
+  }
   return JSON.parse(match[1])
 }
 
