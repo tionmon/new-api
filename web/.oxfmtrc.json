@@ -17,6 +17,7 @@
   "ignorePatterns": [
     "node_modules",
     "dist",
+    "preview-dist",
     "build",
     "coverage",
     ".tanstack",

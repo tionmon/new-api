@@ -20,6 +20,12 @@ For commercial licensing, please contact support@quantumnous.com
 
 @theme inline {
   --font-sans: 'Public Sans', sans-serif;
+  /* Display + technical-label face. A wide industrial mono, used with
+   * restraint: the hero's oversized band, its eyebrow, and the endpoint
+   * string in the hero rail. Latin-only, so prose stays in --font-sans. */
+  --font-tech:
+    'Martian Mono Variable', 'Martian Mono', ui-monospace, SFMono-Regular,
+    Menlo, monospace;
   /* Editorial serif token — the body face used by the `serif` font axis
    * and by presets that opt in (currently Anthropic). Lora carries only
    * Latin glyphs, so the stack walks through CJK serifs (Noto / Source Han

@@ -1,0 +1,171 @@
+{
+  "data": {
+    "HeaderNavModules": "{\"home\":true,\"console\":true,\"pricing\":{\"enabled\":true,\"requireAuth\":false},\"rankings\":{\"enabled\":false,\"requireAuth\":false},\"docs\":false,\"about\":true}",
+    "SidebarModulesAdmin": "{\"chat\":{\"enabled\":false,\"playground\":false,\"chat\":true},\"console\":{\"enabled\":true,\"detail\":true,\"token\":true,\"log\":true,\"audit\":true,\"midjourney\":false,\"task\":true},\"personal\":{\"enabled\":true,\"topup\":true,\"personal\":true,\"security\":true},\"admin\":{\"enabled\":true,\"channel\":true,\"models\":true,\"redemption\":true,\"user\":true,\"setting\":true,\"subscription\":true}}",
+    "announcements": [
+      {
+        "content": "欢迎加入 TokenMetro 用户交流群：交流用法、反馈问题，上新与优惠第一时间通知。\n\n<img src=\"/brand/wx-group-qr.jpg\" alt=\"微信群二维码\" style=\"width:100%;border-radius:8px\">\n\n群二维码 7 天内有效（9 月 26 日前）。若已过期：扫下方二维码添加站长企微，备注「进群」，我来拉你。\n\n<img src=\"/brand/wecom-qr.jpg\" alt=\"站长企业微信\" style=\"width:55%;border-radius:8px\">",
+        "extra": "",
+        "id": 1,
+        "publishDate": "2026-09-19T07:08:55.000Z",
+        "type": "default"
+      }
+    ],
+    "announcements_enabled": true,
+    "api_info": [
+      {
+        "color": "blue",
+        "description": "推荐海外用户",
+        "id": 1,
+        "route": "东京 · 直连",
+        "url": "https://tokenmetro.com/v1"
+      },
+      {
+        "color": "blue",
+        "description": "推荐亚洲用户",
+        "id": 2,
+        "route": "东京 · 优化",
+        "url": "https://ai.cdn.bbql.de/v1"
+      }
+    ],
+    "api_info_enabled": true,
+    "chats": [
+      {
+        "Cherry Studio": "cherrystudio://providers/api-keys?v=1&data={cherryConfig}"
+      },
+      {
+        "AionUI": "aionui://provider/add?v=1&data={aionuiConfig}"
+      },
+      {
+        "流畅阅读": "fluentread"
+      },
+      {
+        "CC Switch": "ccswitch"
+      },
+      {
+        "DeepChat": "deepchat://provider/install?v=1&data={deepchatConfig}"
+      },
+      {
+        "AQBot": "aqbot://providers?{aqbotConfig}"
+      },
+      {
+        "Lobe Chat 官方示例": "https://chat-preview.lobehub.com/?settings={\"keyVaults\":{\"openai\":{\"apiKey\":\"{key}\",\"baseURL\":\"{address}/v1\"}}}"
+      },
+      {
+        "AI as Workspace": "https://aiaw.app/set-provider?provider={\"type\":\"openai\",\"settings\":{\"apiKey\":\"{key}\",\"baseURL\":\"{address}/v1\",\"compatibility\":\"strict\"}}"
+      },
+      {
+        "AMA 问天": "ama://set-api-key?server={address}&key={key}"
+      },
+      {
+        "OpenCat": "opencat://team/join?domain={address}&token={key}"
+      }
+    ],
+    "checkin_enabled": true,
+    "custom_currency_exchange_rate": 1,
+    "custom_currency_symbol": "¤",
+    "data_export_default_time": "hour",
+    "default_collapse_sidebar": false,
+    "default_use_auto_group": false,
+    "demo_site_enabled": false,
+    "discord_client_id": "",
+    "discord_oauth": false,
+    "display_in_currency": true,
+    "docs_link": "",
+    "email_verification": true,
+    "enable_batch_update": true,
+    "enable_data_export": true,
+    "enable_drawing": true,
+    "enable_task": true,
+    "faq": [
+      {
+        "answer": "填 https://tokenmetro.com/v1 ，所有模型共用这一个地址，OpenAI、Gemini、Claude 格式与国产模型均相同。旧地址 api.tokenmetro.com 已停用，请改用新地址。备用入口 https://ai.bbql.de/v1 仅在主站不可用时使用（该入口不支持 passkey 登录）。",
+        "id": 1,
+        "question": "API 请求地址（Base URL）填什么？"
+      },
+      {
+        "answer": "全部按量计费，按实际 token 用量扣费，用多少扣多少，没有包月。例外是 Gemini 两个模型按次数计费：gemini-3.1-pro 每次约 0.1 元、gemini-3.8-flash 每次约 0.05 元，其余模型均按 token 计费。",
+        "id": 3,
+        "question": "怎么计费？是包月吗？"
+      },
+      {
+        "answer": "模型广场显示的就是实付人民币价格，站内 1 元 = 1 额度。分组倍率表示按官方价的折数计费，例如倍率 0.1 即官方价 1 折。每笔调用的实际扣费可在控制台「日志」中点开单条查看明细。",
+        "id": 4,
+        "question": "价格怎么看？「倍率」是什么意思？"
+      },
+      {
+        "answer": "多数情况是请求地址没有修改，仍指向 OpenAI 官方地址；请确认 Base URL 为 https://tokenmetro.com/v1 。其次检查 Key 是否复制完整、令牌是否已被删除或已过期。",
+        "id": 6,
+        "question": "提示 401 / 无效令牌怎么办？"
+      },
+      {
+        "answer": "这是令牌分组与模型不匹配：令牌所在分组没有上架要调用的模型。请到令牌页更换分组，或改调当前分组下已有的模型。429 表示触发速率限制，稍候重试即可。",
+        "id": 7,
+        "question": "提示 403 无权访问 / 503 无可用渠道怎么办？"
+      },
+      {
+        "answer": "正常现象。API 模型本身不知道自己的名字，官方网页版能答对是靠系统提示词注入。如有需要，可在 system prompt 中自行写明模型身份。",
+        "id": 8,
+        "question": "为什么问模型「你是谁」，它答不出或答错？"
+      },
+      {
+        "answer": "控制台钱包页支持在线充值（支付宝）与兑换码兑换，1 元 = 1 额度。如支付遇到问题可联系管理员处理。",
+        "id": 10,
+        "question": "怎么充值？可以退款吗？"
+      },
+      {
+        "answer": "发送邮件至 zhu.po1nt9@gmail.com，请附上令牌名称、模型名、报错信息和发生时间（不要发送 Key 本身），一般会在 24 小时内回复。",
+        "id": 11,
+        "question": "遇到其他问题怎么联系？"
+      }
+    ],
+    "faq_enabled": true,
+    "footer_html": "© 2026 TokenMetro · 本站不对中国大陆地区开放 ·  API 仅供工作与学习，勿用于非法用途\n<style>a[href=\"/#solutions\"]{display:none!important}</style>",
+    "github_client_id": "Ov23liXneyX1RFMnwlBq",
+    "github_oauth": true,
+    "linuxdo_client_id": "hgzwRdU9dBBDPJNqSC6yeaS2jdz7WTI0",
+    "linuxdo_minimum_trust_level": 0,
+    "linuxdo_oauth": true,
+    "logo": "/brand/logo.svg?v=1",
+    "mj_notify_enabled": false,
+    "oidc_authorization_endpoint": "",
+    "oidc_client_id": "",
+    "oidc_display_name": "OIDC",
+    "oidc_enabled": false,
+    "passkey_allow_insecure": false,
+    "passkey_attachment": "",
+    "passkey_display_name": "TokenMetro",
+    "passkey_login": true,
+    "passkey_rp_id": "tokenmetro.com",
+    "passkey_rp_ids": ["tokenmetro.com", "localhost"],
+    "passkey_user_verification": "preferred",
+    "password_login_enabled": true,
+    "password_login_encryption_enabled": false,
+    "password_register_enabled": true,
+    "price": 1,
+    "privacy_policy_enabled": true,
+    "quota_display_type": "CNY",
+    "quota_per_unit": 500000,
+    "register_enabled": true,
+    "self_use_mode_enabled": false,
+    "server_address": "https://tokenmetro.com",
+    "setup": true,
+    "start_time": 1789816298,
+    "stripe_unit_price": 8,
+    "system_name": "TokenMetro",
+    "telegram_bot_name": "",
+    "telegram_oauth": false,
+    "telegram_oauth_configured": false,
+    "theme": "default",
+    "turnstile_check": false,
+    "turnstile_site_key": "",
+    "uptime_kuma_enabled": false,
+    "usd_exchange_rate": 1,
+    "user_agreement_enabled": true,
+    "version": "",
+    "wechat_login": false,
+    "wechat_qrcode": ""
+  },
+  "message": "",
+  "success": true
+}

@@ -17,10 +17,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
+import logoMarkOnDark from '@/assets/brand/logo-mark-on-dark.png'
+import logoMarkOnLight from '@/assets/brand/logo-mark-on-light.png'
 import { Dialog } from '@/components/dialog'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { NotificationPopover } from '@/components/notification-popover'
@@ -32,6 +39,7 @@ import { SystemUpdateAction } from '@/features/system-update/system-update-actio
 import { useNotifications } from '@/hooks/use-notifications'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
+import { handleServerError } from '@/lib/handle-server-error'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -48,19 +56,21 @@ type AuthPromptTarget = {
 
 export interface PublicHeaderProps {
   navLinks?: TopNavLink[]
-  mobileLinks?: TopNavLink[]
-  navContent?: React.ReactNode
   showThemeSwitch?: boolean
   showLanguageSwitcher?: boolean
   logo?: React.ReactNode
   siteName?: string
   homeUrl?: string
-  leftContent?: React.ReactNode
-  rightContent?: React.ReactNode
-  showNavigation?: boolean
   showAuthButtons?: boolean
   showNotifications?: boolean
   className?: string
+  /**
+   * `transparent` floats the header over a full-bleed hero: no background,
+   * no blur, taller bar, edge-to-edge instead of the max-w-7xl container.
+   * It is absolute rather than fixed so it scrolls with the page and never
+   * overlaps content on short viewports.
+   */
+  tone?: 'solid' | 'transparent'
 }
 
 export function PublicHeader(props: PublicHeaderProps) {
@@ -74,6 +84,7 @@ export function PublicHeader(props: PublicHeaderProps) {
     showAuthButtons = true,
     showNotifications = true,
     className,
+    tone = 'solid',
   } = props
 
   const { t } = useTranslation()
@@ -98,45 +109,41 @@ export function PublicHeader(props: PublicHeaderProps) {
   const user = auth.user
   const isAuthenticated = !!user
   const displaySiteName = customSiteName || systemName
+  const isTransparent = tone === 'transparent'
 
   // Curate desktop nav links in AWS console layout
   // Exclude dashboard/console from left links since it lives in the AWS right auth cluster
+  // No forced "Solutions" item either: its only anchor lived in the home page's
+  // GatewayFlowVisualizer, which the single-screen home no longer mounts, and a
+  // nav item whose target does not exist does nothing when clicked. If the
+  // section comes back, add the anchor before re-adding the item here.
   const desktopLinks = useMemo(() => {
     const base = dynamicLinks.length > 0 ? dynamicLinks : navLinks
-    const filtered = base.filter(
+    return base.filter(
       (l) =>
         l.href !== '/dashboard' &&
         l.title !== t('Console') &&
-        l.href !== '/faq' &&
         !l.href.startsWith('/faq') &&
         l.title !== t('FAQ') &&
         l.title !== 'FAQ'
     )
-    // Ensure "Solutions" is included if not already present
-    const hasSolutions = filtered.some(
-      (l) => l.title === t('Solutions') || l.href === '/#solutions'
-    )
-    if (!hasSolutions) {
-      const insertIndex = filtered.findIndex((l) => l.href === '/pricing')
-      const solutionsItem: TopNavLink = {
-        title: t('Solutions'),
-        href: '/#solutions',
-      }
-      if (insertIndex >= 0) {
-        filtered.splice(insertIndex + 1, 0, solutionsItem)
-      } else {
-        filtered.push(solutionsItem)
-      }
-    }
-
-    return filtered
   }, [dynamicLinks, navLinks, t])
 
-  const links = desktopLinks
+  // The deployment's configured wordmark is a single SVG that swaps its own
+  // artwork on `prefers-color-scheme` — the OS setting, not the app theme — so
+  // it is invisible in two of the four combinations. Those known paths are
+  // served by a bundled theme pair instead; any other configured URL is used
+  // exactly as given.
+  const systemLogoIsSingleAsset =
+    !systemLogo ||
+    systemLogo === '/brand/logo.svg' ||
+    systemLogo.startsWith('/brand/logo.svg?') ||
+    systemLogo === '/logo.png'
 
   let logoContent: ReactNode = (
     <HeaderLogo
-      src={systemLogo}
+      src={systemLogoIsSingleAsset ? logoMarkOnLight : systemLogo}
+      srcOnDark={systemLogoIsSingleAsset ? logoMarkOnDark : undefined}
       loading={loading}
       logoLoaded={logoLoaded}
       className='size-full rounded-lg object-contain'
@@ -228,12 +235,14 @@ export function PublicHeader(props: PublicHeaderProps) {
           scrollToTarget()
           window.history.pushState(null, '', link.href)
         } else {
-          navigate({ to: targetPath as any }).then(() => {
-            window.location.hash = hashId
-            setTimeout(scrollToTarget, 100)
-            setTimeout(scrollToTarget, 300)
-            setTimeout(scrollToTarget, 600)
-          })
+          void navigate({ to: targetPath })
+            .then(() => {
+              window.location.hash = hashId
+              setTimeout(scrollToTarget, 100)
+              setTimeout(scrollToTarget, 300)
+              setTimeout(scrollToTarget, 600)
+            })
+            .catch(handleServerError)
         }
       }
     },
@@ -244,31 +253,32 @@ export function PublicHeader(props: PublicHeaderProps) {
     <>
       <header
         className={cn(
-          'fixed inset-x-0 top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md transition-colors duration-200',
+          'inset-x-0 top-0 z-50 w-full transition-colors duration-200',
+          isTransparent
+            ? 'absolute border-b border-transparent bg-transparent'
+            : 'fixed border-b border-border/40 bg-background/95 backdrop-blur-md',
           className
         )}
       >
-        <div className='mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8'>
-          {/* Left section: Logo + AI Gateway + Divider + Navigation links */}
+        <div
+          className={cn(
+            'mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8',
+            isTransparent ? 'h-[68px] max-w-none sm:h-[72px]' : 'h-14 max-w-7xl'
+          )}
+        >
+          {/* Brand cluster with the navigation on its right, pinned left. */}
           <div className='flex items-center gap-2 lg:gap-6'>
             <Link
               to={homeUrl}
-              className='group flex items-center gap-2 shrink-0 select-none'
+              aria-label={displaySiteName}
+              className='group flex shrink-0 items-center gap-2 select-none'
             >
               <div className='flex size-7 shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-105'>
                 {logoContent}
               </div>
-              <span
-                className='text-sm font-bold tracking-tight text-foreground sm:inline-block'
-                title={displaySiteName}
-              >
-                {loading ? <Skeleton className='h-4 w-16' /> : displaySiteName}
-              </span>
             </Link>
 
             <SystemUpdateAction presentation='version' />
-
-            <div className='hidden h-4 w-px bg-border/60 lg:block' />
 
             {/* Desktop Navigation Links */}
             <nav className='hidden items-center gap-6 lg:flex'>
@@ -316,18 +326,8 @@ export function PublicHeader(props: PublicHeaderProps) {
             </nav>
           </div>
 
-          {/* Right section: Search + Lang + Theme + Notify + Auth (AWS Style) */}
+          {/* Right section: Lang + Theme + Notify + Auth */}
           <div className='flex items-center gap-3'>
-            {/* Search Trigger */}
-            <Link
-              to='/pricing'
-              className='hidden items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors sm:flex'
-              title={t('Search models & capabilities')}
-            >
-              <Search className='size-3.5' />
-              <span>{t('Search')}</span>
-            </Link>
-
             {showLanguageSwitcher && <LanguageSwitcher />}
             {showThemeSwitch && <ThemeSwitch />}
             {showNotifications && (
@@ -345,36 +345,28 @@ export function PublicHeader(props: PublicHeaderProps) {
 
             {showAuthButtons && (
               <>
-                <div className='hidden h-4 w-px bg-border/40 lg:block' />
+                <div className='bg-border/40 hidden h-4 w-px lg:block' />
                 <div className='hidden items-center gap-3 lg:flex'>
-                  {loading ? (
-                    <Skeleton className='h-8 w-24 rounded-full' />
-                  ) : isAuthenticated ? (
+                  {loading && <Skeleton className='h-8 w-24 rounded-full' />}
+                  {!loading && isAuthenticated && (
                     <>
                       <Link
                         to='/dashboard'
-                        className='text-xs font-medium text-foreground/80 hover:text-foreground transition-colors px-1 py-1'
+                        className='text-foreground/80 hover:text-foreground px-1 py-1 text-xs font-medium transition-colors'
                       >
                         {t('Console')}
                       </Link>
                       <ProfileDropdown />
                     </>
-                  ) : (
-                    <>
-                      <Link
-                        to='/sign-in'
-                        className='text-xs font-medium text-foreground/80 hover:text-foreground transition-colors px-1 py-1'
-                      >
-                        {t('Sign in to Console')}
-                      </Link>
-                      <Button
-                        size='sm'
-                        className='h-8 rounded-full bg-foreground text-background hover:bg-foreground/90 px-4 text-xs font-semibold shadow-xs transition-all'
-                        render={<Link to='/sign-up' />}
-                      >
-                        {t('Create Account')}
-                      </Button>
-                    </>
+                  )}
+                  {!loading && !isAuthenticated && (
+                    <Button
+                      size='sm'
+                      className='bg-foreground text-background [a]:hover:bg-foreground/90 h-8 rounded-full px-4 text-xs font-semibold shadow-xs transition-all'
+                      render={<Link to='/dashboard' />}
+                    >
+                      {t('Console')}
+                    </Button>
                   )}
                 </div>
               </>
@@ -430,7 +422,7 @@ export function PublicHeader(props: PublicHeaderProps) {
       >
         <div className='flex h-full flex-col justify-between px-8 pt-20 pb-10'>
           <nav className='flex flex-col gap-1'>
-            {links.map((link, i) => {
+            {desktopLinks.map((link, i) => {
               const isActive = pathname === link.href
               const linkClassName = cn(
                 'flex items-center gap-3 py-3 text-base font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
@@ -486,32 +478,15 @@ export function PublicHeader(props: PublicHeaderProps) {
           >
             {showAuthButtons && (
               <div className='flex flex-col gap-2'>
-                {isAuthenticated ? (
-                  <Link
-                    to='/dashboard'
-                    onClick={() => setMobileOpen(false)}
-                    className='bg-foreground text-background inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80'
-                  >
-                    {t('Console')}
-                  </Link>
-                ) : (
-                  <>
-                    <Link
-                      to='/sign-in'
-                      onClick={() => setMobileOpen(false)}
-                      className='border border-border/60 text-foreground inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-colors hover:bg-muted/50'
-                    >
-                      {t('Sign in to Console')}
-                    </Link>
-                    <Link
-                      to='/sign-up'
-                      onClick={() => setMobileOpen(false)}
-                      className='bg-foreground text-background inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80'
-                    >
-                      {t('Create Account')}
-                    </Link>
-                  </>
-                )}
+                {/* One entry point for both states: /dashboard is behind the
+                    auth guard, which sends anonymous visitors to sign-in. */}
+                <Link
+                  to='/dashboard'
+                  onClick={() => setMobileOpen(false)}
+                  className='bg-foreground text-background inline-flex h-10 items-center justify-center rounded-lg text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80'
+                >
+                  {t('Console')}
+                </Link>
               </div>
             )}
           </div>

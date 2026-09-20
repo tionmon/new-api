@@ -20,6 +20,12 @@ import { cn } from '@/lib/utils'
 
 interface HeaderLogoProps {
   src: string
+  /**
+   * Mark to use while the dark palette is active. When supplied, both marks
+   * are rendered and CSS picks one, so the header follows the app theme
+   * instead of the visitor's OS setting.
+   */
+  srcOnDark?: string
   alt?: string
   loading: boolean
   logoLoaded: boolean
@@ -32,20 +38,31 @@ interface HeaderLogoProps {
  */
 export function HeaderLogo({
   src,
+  srcOnDark,
   alt = 'logo',
   loading,
   logoLoaded,
   className,
 }: HeaderLogoProps) {
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={cn(
-        'h-6 w-6 rounded-full transition-opacity duration-200',
-        !loading && logoLoaded ? 'opacity-100' : 'opacity-0',
-        className
-      )}
-    />
+  const base = cn(
+    'h-6 w-6 rounded-full transition-opacity duration-200',
+    !loading && logoLoaded ? 'opacity-100' : 'opacity-0',
+    className
   )
+
+  if (srcOnDark) {
+    return (
+      <>
+        <img src={src} alt={alt} className={cn(base, 'dark:hidden')} />
+        <img
+          src={srcOnDark}
+          alt=''
+          aria-hidden='true'
+          className={cn(base, 'hidden dark:block')}
+        />
+      </>
+    )
+  }
+
+  return <img src={src} alt={alt} className={base} />
 }

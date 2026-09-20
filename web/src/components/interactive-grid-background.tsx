@@ -16,8 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
+import { useEffect, useRef } from 'react'
+
 import { cn } from '@/lib/utils'
 
 interface InteractiveGridBackgroundProps {
@@ -65,6 +66,22 @@ export function InteractiveGridBackground({
     let height = 0
     let dpr = 1
 
+    // The dots are drawn for whatever surface they sit on: a `.dark` ancestor
+    // wins over the <html> class, so a subtree that pins the dark palette gets
+    // light dots even when the visitor's theme is light.
+    const isDarkSurface = () =>
+      !!canvas.closest('.dark') ||
+      document.documentElement.classList.contains('dark')
+
+    const palette = () => {
+      const isDark = isDarkSurface()
+      return {
+        isDark,
+        baseRadius: isDark ? 1.0 : 1.15,
+        baseOpacity: isDark ? 0.18 : 0.22,
+      }
+    }
+
     const initGrid = () => {
       width = window.innerWidth
       height = window.innerHeight
@@ -103,9 +120,7 @@ export function InteractiveGridBackground({
       if (!ctx) return
       ctx.clearRect(0, 0, width, height)
 
-      const isDark = document.documentElement.classList.contains('dark')
-      const baseRadius = isDark ? 1.0 : 1.15
-      const baseOpacity = isDark ? 0.18 : 0.22
+      const { isDark, baseRadius, baseOpacity } = palette()
 
       for (const dot of dotsRef.current) {
         ctx.beginPath()
@@ -121,9 +136,7 @@ export function InteractiveGridBackground({
       if (!ctx) return
       ctx.clearRect(0, 0, width, height)
 
-      const isDark = document.documentElement.classList.contains('dark')
-      const baseRadius = isDark ? 1.0 : 1.15
-      const baseOpacity = isDark ? 0.18 : 0.22
+      const { isDark, baseRadius, baseOpacity } = palette()
       const mouse = mouseRef.current
 
       let stillMoving = false
@@ -158,7 +171,10 @@ export function InteractiveGridBackground({
         }
 
         // Draw dot with dynamic magnetic glow/enlarge
-        const disp = Math.hypot(dot.currentX - dot.originX, dot.currentY - dot.originY)
+        const disp = Math.hypot(
+          dot.currentX - dot.originX,
+          dot.currentY - dot.originY
+        )
         const dispNorm = Math.min(disp / 18, 1)
 
         const r = baseRadius + dispNorm * 0.75
@@ -247,7 +263,7 @@ export function InteractiveGridBackground({
               'radial-gradient(ellipse 580px 500px at 50% 50%, black 15%, rgba(0,0,0,0.45) 55%, transparent 100%)',
           }}
         >
-          <div className='absolute inset-0 hexhub-grid-pattern' />
+          <div className='hexhub-grid-pattern absolute inset-0' />
           <canvas ref={canvasRef} className='absolute inset-0' />
         </motion.div>
 
@@ -256,7 +272,7 @@ export function InteractiveGridBackground({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className='pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[520px] w-[580px] rounded-full bg-radial from-neutral-300/30 via-neutral-200/10 to-transparent blur-3xl dark:from-white/10 dark:via-white/5 dark:to-transparent'
+          className='pointer-events-none absolute top-1/2 left-1/2 h-[520px] w-[580px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-radial from-neutral-300/30 via-neutral-200/10 to-transparent blur-3xl dark:from-white/10 dark:via-white/5 dark:to-transparent'
         />
       </div>
     )
@@ -270,7 +286,7 @@ export function InteractiveGridBackground({
         className
       )}
     >
-      <div className='absolute inset-0 hexhub-grid-pattern' />
+      <div className='hexhub-grid-pattern absolute inset-0' />
       <canvas ref={canvasRef} className='absolute inset-0' />
     </div>
   )

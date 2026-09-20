@@ -13,6 +13,7 @@ build
 logs
 web/dist
 web/node_modules
+web/preview-dist
 .env
 one-api
 new-api

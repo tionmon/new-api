@@ -26,6 +26,11 @@ For commercial licensing, please contact support@quantumnous.com
  * that activates it. Loaded globally so font-switching is instantaneous
  * with no FOUT once the variable is fetched. */
 @import '@fontsource-variable/lora';
+/* Display + technical-label face for the public hero. Pinned rather than left
+ * to `ui-monospace`, which renders as SF Mono on macOS, Consolas on Windows
+ * and DejaVu elsewhere — the largest type on the site would change shape per
+ * visitor. See `--font-tech` in theme.css. */
+@import '@fontsource-variable/martian-mono';
 
 @import './theme.css';
 @import './theme-presets.css';
@@ -131,7 +136,51 @@ For commercial licensing, please contact support@quantumnous.com
     linear-gradient(90deg, rgba(91, 96, 104, 0.13) 1px, transparent 0),
     linear-gradient(180deg, rgba(91, 96, 104, 0.13) 1px, transparent 0);
   background-position: top center;
-  background-size: 18px 18px, 18px 18px, 90px 90px, 90px 90px;
+  background-size:
+    18px 18px,
+    18px 18px,
+    90px 90px,
+    90px 90px;
+}
+
+/* Home hero palette. The hero is a fixed composition with its own ground,
+ * ink, one accent and a stroked register, so it is expressed as tokens rather
+ * than as a `dark:` twin of every utility class: the light and dark looks are
+ * two value blocks here, and the component reads one set of names. */
+:root {
+  --hero-ground: #f5f5f1;
+  --hero-ink: #0b0b0a;
+  --hero-ink-soft: #2f2f2b;
+  --hero-muted: #6e706a;
+  --hero-faint: #8b8d87;
+  --hero-type: #0e72bc;
+  --hero-type-soft: #4a8cc6;
+  --hero-stroke: rgba(14, 114, 188, 0.42);
+  --hero-wordmark-stroke: rgba(14, 114, 188, 0.34);
+  --hero-dot: rgba(14, 114, 188, 0.45);
+  --hero-pill-bg: #0b0b0a;
+  --hero-pill-ink: #f5f5f1;
+  --hero-pill-line: rgba(11, 11, 10, 0.22);
+  --hero-shadow: rgba(245, 245, 241, 0.92);
+  --hero-status-glow: rgba(14, 114, 188, 0.14);
+}
+
+.dark {
+  --hero-ground: #050505;
+  --hero-ink: #f5f5ef;
+  --hero-ink-soft: #efefe9;
+  --hero-muted: #9ea09a;
+  --hero-faint: #747670;
+  --hero-type: #5daaf2;
+  --hero-type-soft: #8fb6ea;
+  --hero-stroke: rgba(93, 170, 242, 0.62);
+  --hero-wordmark-stroke: rgba(93, 170, 242, 0.45);
+  --hero-dot: rgba(93, 170, 242, 0.45);
+  --hero-pill-bg: #f5f5ef;
+  --hero-pill-ink: #080808;
+  --hero-pill-line: rgba(255, 255, 255, 0.25);
+  --hero-shadow: #050505;
+  --hero-status-glow: rgba(93, 170, 242, 0.12);
 }
 
 .dark .hexhub-grid-pattern {
@@ -141,7 +190,11 @@ For commercial licensing, please contact support@quantumnous.com
     linear-gradient(90deg, rgba(255, 255, 255, 0.075) 1px, transparent 0),
     linear-gradient(180deg, rgba(255, 255, 255, 0.075) 1px, transparent 0);
   background-position: top center;
-  background-size: 18px 18px, 18px 18px, 90px 90px, 90px 90px;
+  background-size:
+    18px 18px,
+    18px 18px,
+    90px 90px,
+    90px 90px;
 }
 
 /* Vercel Geist-style skeleton shimmer */
@@ -449,6 +502,82 @@ For commercial licensing, please contact support@quantumnous.com
   .scroll-container:hover .animate-scroll-down {
     animation-play-state: paused;
   }
+
+  /* Hero type layer. The four objects breathe on two staggered clocks rather
+   * than scrolling: the reference's hero is a static composition, and a
+   * translate lane would flatten it back into a ticker. */
+  @keyframes hero-breathe-a {
+    50% {
+      transform: scaleX(1.035) translateY(-5px);
+    }
+  }
+
+  @keyframes hero-breathe-b {
+    50% {
+      transform: scaleX(1.02) translateY(4px);
+    }
+  }
+
+  @keyframes hero-enter {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes hero-dot {
+    50% {
+      opacity: 0.4;
+      transform: scale(0.72);
+    }
+  }
+
+  .animate-hero-breathe {
+    animation: hero-breathe-a 14s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  /* Second clock, assigned explicitly rather than by child order. */
+  .animate-hero-breathe-alt {
+    animation: hero-breathe-b 18s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  /* The delay rides on a custom property, not an `animation-delay` utility: the
+   * `animation` shorthand above re-declares every omitted longhand, and Tailwind
+   * emits generated utilities before this block, so a plain delay utility would
+   * be reset to 0s no matter where it is written. */
+  .animate-hero-enter {
+    animation: hero-enter 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: var(--hero-enter-delay, 0s);
+  }
+
+  .animate-hero-dot {
+    animation: hero-dot 2s ease-in-out infinite;
+  }
+
+  /* The wordmark that sits behind the hero copy, echoing the reference's
+   * centre word: stroked rather than filled, skewed off the vertical, and
+   * faint enough that the solid copy wins. The copy carries its own
+   * text-shadow, so no scrim is needed between them. */
+  .hero-wordmark {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--hero-wordmark-stroke);
+    transform: skewX(-10deg);
+  }
+
+  /* Outline-only variant of a band row. Declared here rather than as an
+   * arbitrary Tailwind property so the vendor prefix stays readable. A uniform
+   * 1px reads evenly at both row sizes; anything thinner antialiases unevenly
+   * on a near-black ground and the strokes start to look broken. */
+  .hero-band-outline {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--hero-stroke);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -456,6 +585,10 @@ For commercial licensing, please contact support@quantumnous.com
   .animate-appear-zoom,
   .animate-scroll-up,
   .animate-scroll-down,
+  .animate-hero-breathe,
+  .animate-hero-breathe-alt,
+  .animate-hero-dot,
+  .animate-hero-enter,
   [data-slot='table'] tbody tr {
     animation: none !important;
     opacity: 1;

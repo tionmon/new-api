@@ -904,6 +904,7 @@
     "Built-in: phone fingerprint/face, or Windows Hello; External: USB security key": "内置：手机指纹/面部，或 Windows Hello；外部：USB 安全密钥",
     "Bulk actions for {{count}} selected records": "对 {{count}} 条所选记录执行批量操作",
     "Business Systems": "自有业务系统",
+    "Buy a {{amount}} CNY redemption code": "购买 {{amount}} 元兑换码",
     "by": "由",
     "By category": "按行业",
     "By model author": "按模型厂商",
@@ -4242,6 +4243,7 @@
     "Passwords don't match.": "两次输入的密码不一致。",
     "Paste Connection Info": "粘贴连接信息",
     "Paste JavaScript source here...": "在此粘贴 JavaScript 源码...",
+    "Paste your redemption code": "粘贴您的兑换码",
     "Path": "路径",
     "Path not set": "未设置路径",
     "Path Regex (one per line)": "路径正则（每行一个）",
@@ -4326,6 +4328,7 @@
     "Personal use": "个人使用",
     "Personal use mode": "个人使用模式",
     "Pick a date": "选择日期",
+    "Pick an amount, buy a code, then redeem it here": "选择面额，购买后回来兑换",
     "Pick or create both a store and a product before saving.": "保存前请同时选择或创建店铺和产品。",
     "Ping Interval (seconds)": "Ping 间隔（秒）",
     "Plan": "套餐",
@@ -4726,6 +4729,7 @@
     "Redeemed at": "使用时间",
     "Redeemed By": "兑换人",
     "Redeemed:": "已兑换：",
+    "Redemption code": "兑换码",
     "Redemption Cards Supported": "支持充值兑换卡",
     "redemption code": "兑换码",
     "Redemption Code": "兑换码",
@@ -6824,6 +6828,11 @@
     "Multiple Upstream Channels Running Concurrently": "多条上游并发运行",
     "Simulate Failure": "模拟故障",
     "Standard OpenAI API format, drop-in replacement for any client without code changes.": "标准接口规范，零代码无缝接入各类开发工具。",
-    "Access GPT, Claude, DeepSeek, and Gemini with clear, pay-as-you-go quota metering.": "聚合 GPT、Claude、DeepSeek、Gemini，按真实消耗透明计量扣费。"
+    "Access GPT, Claude, DeepSeek, and Gemini with clear, pay-as-you-go quota metering.": "聚合 GPT、Claude、DeepSeek、Gemini，按真实消耗透明计量扣费。",
+    "API GATEWAY · SMART ROUTING · UNIFIED BILLING": "API GATEWAY · SMART ROUTING · UNIFIED BILLING",
+    "Access API": "接入 API",
+    "TokenMetro API": "TokenMetro API",
+    "One interface to every AI model.": "统一的接口，连接全球 AI 模型",
+    "Observable · scalable · controllable": "可观测 · 可拓展 · 可控制"
   }
 }

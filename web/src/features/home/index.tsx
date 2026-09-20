@@ -20,18 +20,12 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
-import { Footer } from '@/components/layout/components/footer'
 import { RichContent } from '@/components/rich-content'
 import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import {
-  CTA,
-  GatewayFlowVisualizer,
-  Hero,
-  ProviderMarquee,
-} from './components'
+import { Hero } from './components'
 import { useHomePageContent } from './hooks'
 
 export function Home() {
@@ -62,26 +56,6 @@ export function Home() {
       syncIframePreferences()
     }
   }, [isUrl, syncIframePreferences])
-
-  useEffect(() => {
-    if (!isLoaded || content) return
-    const handleHashScroll = () => {
-      const targetHash = window.location.hash.replace(/^#/, '')
-      if (targetHash) {
-        const el = document.getElementById(targetHash)
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth' })
-        }
-      }
-    }
-
-    const timer = setTimeout(handleHashScroll, 120)
-    window.addEventListener('hashchange', handleHashScroll)
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('hashchange', handleHashScroll)
-    }
-  }, [isLoaded, content])
 
   if (!isLoaded) {
     return (
@@ -117,9 +91,7 @@ export function Home() {
       )
     }
 
-    const contentIsHtml = isLikelyHtml(content)
-
-    if (contentIsHtml) {
+    if (isLikelyHtml(content)) {
       return (
         <PublicLayout showMainContainer={false}>
           <RichContent
@@ -145,25 +117,15 @@ export function Home() {
     )
   }
 
+  // The hero owns the footer and theme palette. Short viewports may scroll
+  // to keep the header, main copy and footer from overlapping.
   return (
-    <PublicLayout showMainContainer={false}>
-      <div className='relative min-h-screen'>
-        {/* Top Centered Subtle Lens Ambient Glow (Pure Monochrome / Graphite, Zero Blue/Purple) */}
-        <div
-          aria-hidden
-          className='pointer-events-none absolute top-0 left-1/2 h-[600px] w-[1100px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-60 blur-[130px] dark:opacity-25'
-          style={{
-            background:
-              'radial-gradient(ellipse at center, rgba(140, 150, 170, 0.14) 0%, rgba(100, 110, 130, 0.03) 55%, transparent 75%)',
-          }}
-        />
-
-        <Hero isAuthenticated={isAuthenticated} />
-        <ProviderMarquee />
-        <GatewayFlowVisualizer />
-        <CTA isAuthenticated={isAuthenticated} />
-        <Footer />
-      </div>
+    <PublicLayout
+      showMainContainer={false}
+      showGridBackground={false}
+      headerProps={{ tone: 'transparent' }}
+    >
+      <Hero isAuthenticated={isAuthenticated} />
     </PublicLayout>
   )
 }
