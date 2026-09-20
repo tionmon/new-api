@@ -17,9 +17,151 @@
     <meta name="theme-color" content="#fff" />
     <!--umami-->
     <!--Google Analytics-->
+
+    <!--
+      First-paint skeleton.
+
+      The bundle is ~1 MB, so until React mounts this page would otherwise be a
+      blank white rectangle. Everything below is inline, so the skeleton costs no
+      extra request — the spec forbids one, and an image would delay the very
+      paint it exists to cover.
+
+      The theme class is set here, before the first paint, from the same two
+      inputs the app uses (`vite-ui-theme` cookie, then `prefers-color-scheme`).
+      That is what lets the skeleton carry the right background, and it also
+      removes the white-then-dark flash a dark-theme visitor saw until now.
+
+      The literals inside var() are fallbacks for the moment before
+      styles/index.css applies; once it does, the real tokens win.
+    -->
+    <style>
+      #boot-skeleton {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 24px;
+        text-align: center;
+        background: var(--background, oklch(1 0 0));
+        color: var(--muted-foreground, oklch(0.55 0 0));
+        font-family:
+          var(--font-body),
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      #boot-skeleton-name {
+        color: var(--foreground, oklch(0.145 0 0));
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+      }
+
+      /* A cold visit has no cached site name; the empty line would otherwise
+         still contribute a gap. */
+      #boot-skeleton-name:empty {
+        display: none;
+      }
+
+      /* Mirrors the app's own loading idiom: a 24px spinning arc, muted. */
+      #boot-skeleton-spinner {
+        width: 24px;
+        height: 24px;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: boot-skeleton-spin 0.8s linear infinite;
+      }
+
+      @keyframes boot-skeleton-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #boot-skeleton-spinner {
+          animation: none;
+        }
+      }
+
+      html.dark #boot-skeleton {
+        background: var(--background, oklch(0.235 0 0));
+        color: var(--muted-foreground, oklch(0.78 0 0));
+      }
+
+      html.dark #boot-skeleton-name {
+        color: var(--foreground, oklch(0.965 0 0));
+      }
+
+      /*
+        Handoff. `#root` stays empty until React commits its first children, so
+        this hides the skeleton in the same style recalculation that inserts the
+        app: no timer to tune, no gap of blank paint, and nothing left to clean
+        up afterwards. If the bundle never arrives, the rule never matches and
+        the skeleton stays — which is the honest thing to show.
+      */
+      body:has(#root > *) #boot-skeleton {
+        display: none;
+      }
+    </style>
+    <script>
+      ;(function () {
+        var root = document.documentElement
+        var match = document.cookie.match(/(?:^|; )vite-ui-theme=([^;]*)/)
+        var theme = match ? decodeURIComponent(match[1]) : ''
+        if (theme !== 'dark' && theme !== 'light') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light'
+        }
+        root.classList.add(theme)
+
+        var stored = window.localStorage.getItem('i18nextLng') || ''
+        root.setAttribute(
+          'data-boot-lang',
+          stored.indexOf('zh') === 0 || navigator.language.indexOf('zh') === 0
+            ? 'zh'
+            : 'en'
+        )
+      })()
+    </script>
   </head>
 
   <body>
+    <div id="boot-skeleton" role="status">
+      <span id="boot-skeleton-name"></span>
+      <span id="boot-skeleton-spinner" aria-hidden="true"></span>
+      <span id="boot-skeleton-label"></span>
+    </div>
     <div id="root" translate="no" class="notranslate"></div>
+    <script>
+      ;(function () {
+        var zh =
+          document.documentElement.getAttribute('data-boot-lang') === 'zh'
+        document.getElementById('boot-skeleton-label').textContent = zh
+          ? '正在加载…'
+          : 'Loading…'
+        try {
+          var cached = JSON.parse(
+            window.localStorage.getItem('status') || 'null'
+          )
+          if (cached && cached.system_name) {
+            document.getElementById('boot-skeleton-name').textContent =
+              cached.system_name
+          }
+        } catch (error) {
+          /* A cold visit has no cached status; the name line stays empty. */
+        }
+      })()
+    </script>
   </body>
 </html>
