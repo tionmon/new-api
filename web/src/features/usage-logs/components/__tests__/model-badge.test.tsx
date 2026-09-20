@@ -264,8 +264,6 @@ it.each(
     expect(screen.getByText(model.trim())).toBeVisible()
     const icon = screen.getByLabelText(label)
     expect(icon).toBeVisible()
-    // 图标按需加载（首屏约束见 lib/lobe-icon.tsx）：首次渲染出占位，
-    // 模块到位后替换为 svg。断言最终必须渲染出真实图标。
     await waitFor(() => expect(icon.querySelector('svg, img')).not.toBeNull())
   }
 )

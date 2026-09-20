@@ -24,17 +24,8 @@ For commercial licensing, please contact support@quantumnous.com
  * - Basic: "OpenAI", "OpenAI.Color"
  * - Chained properties: "OpenAI.Avatar.type={'platform'}"
  * - Size parameter: getLobeIcon("OpenAI", 20)
- *
- * ⚠️ 首屏约束（2026-09-20）：**不要改回静态导入，也不要 import 包根入口
- * '@lobehub/icons' 或目录的复合入口 es/<Name>/index.js。** 根入口
- * `export * from './features'` 会静态引进全部 300+ 个图标；复合入口会把
- * Avatar/Combine 纳入模块图，而它们依赖 @lobehub/ui 与 antd-style——两者都会把
- * antd 拖进初始图（实测入口 chunk 6.1 MB 原始 / 1.2 MB gzip，首屏白屏数秒）。
- * 图标名来自数据库、无法静态枚举，因此只保留按需加载：每个名字只取
- * components/<Variant>.js 子模块（仅依赖 react），加载期间渲染与「未找到」一致、
- * 尺寸相同的首字母圆标以免布局跳动；名字清单 getLobeIconNames 读构建期生成的
- * lobe-icon-names.json（约 8 KB），不带任何图标组件与元数据。首屏体积由 scripts/check-bundle-budget.mjs 把关。
  */
+import { toc } from '@lobehub/icons/es/toc'
 import {
   lazy,
   Suspense,
@@ -46,11 +37,6 @@ import {
 import sglangLogo from '@/assets/brand-icons/sglang.svg'
 import { IconSub2api } from '@/assets/custom/icon-sub2api'
 import { IconWan } from '@/assets/custom/icon-wan'
-
-import lobeIconNames from './lobe-icon-names.json'
-
-type IconComponent = ComponentType<Record<string, unknown>>
-type IconProps = Record<string, string | number | boolean>
 
 const CUSTOM_ICONS: Record<string, ComponentType<{ size?: number }>> = {
   SGLang: (props) => (
@@ -67,56 +53,34 @@ const CUSTOM_ICONS: Record<string, ComponentType<{ size?: number }>> = {
   Wan: IconWan,
 }
 
-/** @lobehub/icons 里可用的图标变体（每变体一个 components/<Variant>.js） */
-const ICON_VARIANTS = ['Mono', 'Color', 'Text', 'Avatar', 'Combine'] as const
-type IconVariant = (typeof ICON_VARIANTS)[number]
+const ICON_METADATA = new Map(toc.map((icon) => [icon.id, icon]))
+const ICON_VARIANTS = {
+  Avatar: 'hasAvatar',
+  Brand: 'hasBrand',
+  BrandColor: 'hasBrandColor',
+  Color: 'hasColor',
+  Combine: 'hasCombine',
+  Text: 'hasText',
+  TextCn: 'hasTextCn',
+  TextColor: 'hasTextColor',
+} as const
+const LAZY_ICONS = new Map<
+  string,
+  LazyExoticComponent<ComponentType<Record<string, unknown>>>
+>()
 
-function isIconVariant(value: string): value is IconVariant {
-  return (ICON_VARIANTS as readonly string[]).includes(value)
-}
-
-/**
- * 已发起或已完成的变体加载，按 `${图标名}.${变体}` 去重；
- * 图标没有的变体（解析为 null）同样缓存，避免反复重试。
- */
-const variantRequests = new Map<string, Promise<IconComponent | null>>()
-
-/**
- * 变体导入器本身是个异步模块（见 `lobe-icon-variant.ts`）：它带着一张 1480 键的
- * 「图标名 → chunk」映射表，只有真要画图标时才用得上，不该进首屏入口 chunk。
- * 这里只加载一次，之后复用同一个 Promise。
- */
-let variantImporter: Promise<typeof import('./lobe-icon-variant')> | null = null
-
-function loadVariantImporter(): Promise<typeof import('./lobe-icon-variant')> {
-  variantImporter ??= import('./lobe-icon-variant')
-  return variantImporter
-}
-
-/**
- * 取变体组件：同一变体只请求一次，并发调用复用同一个 Promise。
- * 该图标没有所请求的变体（例如 Groq 没有 Color）时回落到 Mono，
- * 与改动前「复合图标上取不到该键就落到 Mono」的行为一致。
- */
-function loadVariant(
-  baseKey: string,
-  variant: IconVariant
-): Promise<IconComponent | null> {
-  const key = `${baseKey}.${variant}`
-  const started = variantRequests.get(key)
-  if (started) return started
-
-  const request = loadVariantImporter()
-    .then((mod) => mod.importIconVariant(baseKey, variant))
-    // 导入器本身没拿到（离线、chunk 被拦）也走回落，不让调用方收到拒绝。
-    .catch(() => null)
-    .then((component) => {
-      if (component || variant === 'Mono') return component
-      return loadVariant(baseKey, 'Mono')
-    })
-
-  variantRequests.set(key, request)
-  return request
+function renderLobeIconFallback(
+  name: string,
+  size: number | string
+): ReactNode {
+  return (
+    <div
+      className='bg-muted text-muted-foreground flex items-center justify-center rounded-full text-xs font-medium'
+      style={{ width: size, height: size }}
+    >
+      {name.charAt(0).toUpperCase() || '?'}
+    </div>
+  )
 }
 
 /**
@@ -154,15 +118,68 @@ function parseValue(raw: string | undefined | null): string | number | boolean {
 }
 
 /**
- * 解析链式属性（如 "type={'platform'}", "shape='square'"）。
- * 尺寸只在调用串未显式指定 size 时补齐。
+ * Get LobeHub icon component by name
+ * @param iconName - Icon name/description (e.g., "OpenAI", "OpenAI.Color", "Claude.Avatar")
+ * @param size - Icon size (default: 20)
+ * @returns Icon component or fallback
+ *
+ * @example
+ * getLobeIcon("OpenAI", 24)
+ * getLobeIcon("OpenAI.Color", 20)
+ * getLobeIcon("Claude.Avatar.type={'platform'}", 32)
  */
-function parseProps(
-  segments: string[],
-  propStartIndex: number,
-  size: number
-): IconProps {
-  const props: IconProps = {}
+export function getLobeIcon(
+  iconName: string | undefined | null,
+  size: number = 20
+): ReactNode {
+  const trimmedName = typeof iconName === 'string' ? iconName.trim() : ''
+  const fallback = renderLobeIconFallback(trimmedName, size)
+  if (!trimmedName) return fallback
+
+  const segments = trimmedName.split('.')
+  const baseKey = segments[0]
+  const CustomIcon = CUSTOM_ICONS[baseKey]
+  if (CustomIcon) return <CustomIcon size={size} />
+
+  const metadata = ICON_METADATA.get(baseKey)
+  if (!metadata) return fallback
+
+  const variantKey = segments[1] as keyof typeof ICON_VARIANTS
+  const variantFlag = ICON_VARIANTS[variantKey]
+  let variant: string =
+    variantFlag && metadata.param[variantFlag] ? variantKey : 'Mono'
+  // These published variants are not represented by the package's toc flags.
+  if (
+    (baseKey === 'Gemma' && segments[1] === 'Simple') ||
+    (baseKey === 'LobeHub' && segments[1] === 'Morden')
+  ) {
+    variant = segments[1]
+  }
+  const propStartIndex =
+    segments.length > 1 && /^[A-Z]/.test(segments[1]) ? 2 : 1
+  const cacheKey = `${baseKey}.${variant}`
+  let IconComponent = LAZY_ICONS.get(cacheKey)
+  if (!IconComponent) {
+    // Load the selected SVG variant, avoiding the brand index's Avatar/UI dependencies.
+    IconComponent = lazy(() =>
+      import(
+        /* webpackInclude: /\/components\/(Mono|Avatar|Brand|BrandColor|Color|Combine|Text|TextCn|TextColor|Simple|Morden)\.js$/ */
+        `@lobehub/icons/es/${baseKey}/components/${variant}.js`
+      ).catch(() => ({
+        default: (props: Record<string, unknown>) =>
+          renderLobeIconFallback(
+            baseKey,
+            typeof props.size === 'number' || typeof props.size === 'string'
+              ? props.size
+              : 20
+          ),
+      }))
+    )
+    LAZY_ICONS.set(cacheKey, IconComponent)
+  }
+
+  // Parse chained properties (e.g., "type={'platform'}", "shape='square'")
+  const props: Record<string, string | number | boolean> = {}
 
   for (let i = propStartIndex; i < segments.length; i++) {
     const seg = segments[i]
@@ -179,127 +196,29 @@ function parseProps(
     props[key] = parseValue(valRaw)
   }
 
+  // Set size if not explicitly specified in the string
   if (props.size == null && size != null) {
     props.size = size
   }
 
-  return props
-}
-
-/**
- * 解析图标名要用的变体与属性起始位置，复刻改动前的规则：
- * 二级键命中已知变体（Color/Text/Avatar/Combine）则取该变体并跳过后面的属性段；
- * 否则回落到 Mono，且当二级键形如变体名（大写开头）时同样跳过它。
- */
-function resolveVariant(segments: string[]): {
-  variant: IconVariant
-  propStartIndex: number
-} {
-  if (segments.length === 1) {
-    return { variant: 'Mono', propStartIndex: 1 }
-  }
-
-  const second = segments[1]
-  if (isIconVariant(second)) {
-    return { variant: second, propStartIndex: 2 }
-  }
-
-  return {
-    variant: 'Mono',
-    propStartIndex: /^[A-Z]/.test(second) ? 2 : 1,
-  }
-}
-
-/**
- * 兜底圆标。刻意写成返回 JSX 的普通函数而非组件：本文件同时导出非组件的
- * getLobeIcon/getLobeIconNames，声明组件会触发 react(only-export-components)。
- */
-function renderFallback(size: number, label?: string): ReactNode {
-  return (
-    <div
-      className='bg-muted text-muted-foreground flex items-center justify-center rounded-full text-xs font-medium'
-      style={{ width: size, height: size }}
-    >
-      {label ?? '?'}
-    </div>
-  )
-}
-
-/** 变体加载失败（名字不存在等）时渲染的兜底组件 */
-function makeFallbackIcon(label: string) {
-  return (props: { size?: number }) => renderFallback(props.size ?? 20, label)
-}
-
-/** 图标名 → 组件，缓存组件身份，重渲染不会重新加载或重挂载 */
-const lazyIconCache = new Map<string, LazyExoticComponent<IconComponent>>()
-
-/**
- * 把某个图标名映射成可渲染的组件。
- * 用 React.lazy 而非自建 hooks 组件：本文件不需要声明组件，Suspense 负责占位。
- * 名字相同必然解析出同一变体（resolveVariant 是纯函数），因此缓存只按名字索引。
- */
-function lazyIcon(
-  name: string,
-  variant: IconVariant
-): LazyExoticComponent<IconComponent> {
-  const cached = lazyIconCache.get(name)
-  if (cached) return cached
-
-  const [baseKey] = name.split('.')
-  const label = name.charAt(0).toUpperCase()
-  const created = lazy(async () => ({
-    default: (await loadVariant(baseKey, variant)) ?? makeFallbackIcon(label),
-  }))
-
-  lazyIconCache.set(name, created)
-  return created
-}
-
-/**
- * Get LobeHub icon component by name
- * @param iconName - Icon name/description (e.g., "OpenAI", "OpenAI.Color", "Claude.Avatar")
- * @param size - Icon size (default: 20)
- * @returns Icon component or fallback
- *
- * @example
- * getLobeIcon("OpenAI", 24)
- * getLobeIcon("OpenAI.Color", 20)
- * getLobeIcon("Claude.Avatar.type={'platform'}", 32)
- */
-export function getLobeIcon(
-  iconName: string | undefined | null,
-  size: number = 20
-): ReactNode {
-  // 名字来自数据库，运行时可能是任何值，不只是 string | undefined | null
-  if (typeof iconName !== 'string') {
-    return renderFallback(size)
-  }
-
-  const trimmedName = iconName.trim()
-  if (!trimmedName) {
-    return renderFallback(size)
-  }
-
-  const segments = trimmedName.split('.')
-  const CustomIcon = CUSTOM_ICONS[segments[0]]
-  if (CustomIcon) {
-    return <CustomIcon size={size} />
-  }
-
-  const resolved = resolveVariant(segments)
-  const LazyIcon = lazyIcon(trimmedName, resolved.variant)
   return (
     <Suspense
-      fallback={renderFallback(size, trimmedName.charAt(0).toUpperCase())}
+      fallback={renderLobeIconFallback(
+        baseKey,
+        typeof props.size === 'number' || typeof props.size === 'string'
+          ? props.size
+          : size
+      )}
     >
-      <LazyIcon {...parseProps(segments, resolved.propStartIndex, size)} />
+      <IconComponent {...props} />
     </Suspense>
   )
 }
 
-// The selector reads the same icon registry as the renderer, but only its generated
-// name list (scripts/gen-lobe-icon-names.mjs): the package's own toc is ~97 KB of
-// metadata and would ride along in the initial chunk.
+// The selector uses the same installed icon registry as the renderer.
 export function getLobeIconNames(): string[] {
-  return [...new Set([...lobeIconNames, ...Object.keys(CUSTOM_ICONS)])].sort()
+  const names = toc.flatMap((icon) =>
+    icon.param.hasColor ? [icon.id, `${icon.id}.Color`] : [icon.id]
+  )
+  return [...new Set([...names, ...Object.keys(CUSTOM_ICONS)])].sort()
 }
