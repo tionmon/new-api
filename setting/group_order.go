@@ -1,7 +1,9 @@
 package setting
 
 import (
+	"encoding/json"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/QuantumNous/new-api/common"
@@ -13,17 +15,73 @@ import (
 var groupOrder = []string{}
 var groupOrderMutex sync.RWMutex
 
+// GetGroupOrder returns the order users should see groups in: the configured
+// order, or — until an admin saves one — the order the groups are written in the
+// GroupRatio option, which is the row order of the admin group pricing table.
+//
+// The fallback matters: the table writes GroupRatio in row order, so that order is
+// what the admin is looking at. Without it the table's order would mean nothing
+// until someone pressed save, and users would get the alphabetically sorted order
+// that encoding/json produces for a map.
 func GetGroupOrder() []string {
 	groupOrderMutex.RLock()
-	defer groupOrderMutex.RUnlock()
+	configured := slices.Clone(groupOrder)
+	groupOrderMutex.RUnlock()
 
-	// Callers put this straight into an API envelope that declares an array, so an
-	// unconfigured order has to be an empty list rather than null.
-	if groupOrder == nil {
+	if len(configured) > 0 {
+		return configured
+	}
+	return groupOrderFromGroupRatio()
+}
+
+// groupOrderFromGroupRatio reads the GroupRatio option's key order. It is a string
+// in the option map precisely because the written order carries information that a
+// map (and therefore any re-marshal of one) would lose.
+func groupOrderFromGroupRatio() []string {
+	common.OptionMapRWMutex.RLock()
+	raw := common.OptionMap["GroupRatio"]
+	common.OptionMapRWMutex.RUnlock()
+
+	keys := jsonObjectKeyOrder(raw)
+	if keys == nil {
 		return []string{}
 	}
+	return keys
+}
 
-	return slices.Clone(groupOrder)
+// jsonObjectKeyOrder returns a JSON object's keys in the order they are written.
+// encoding/json cannot express that through a map, so it walks the tokens instead.
+// Anything malformed yields the keys read so far, which for this use is a safe
+// partial order.
+func jsonObjectKeyOrder(raw string) []string {
+	decoder := json.NewDecoder(strings.NewReader(raw))
+
+	token, err := decoder.Token()
+	if err != nil {
+		return nil
+	}
+	if delim, ok := token.(json.Delim); !ok || delim != '{' {
+		return nil
+	}
+
+	keys := []string{}
+	for decoder.More() {
+		token, err = decoder.Token()
+		if err != nil {
+			return keys
+		}
+		key, ok := token.(string)
+		if !ok {
+			return keys
+		}
+		keys = append(keys, key)
+
+		var value json.RawMessage
+		if err := decoder.Decode(&value); err != nil {
+			return keys
+		}
+	}
+	return keys
 }
 
 func GroupOrder2JSONString() string {

@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/QuantumNous/new-api/common"
 )
 
 func TestSortGroupsByDisplayOrder(t *testing.T) {
@@ -95,5 +97,83 @@ func TestGetGroupOrderNeverReturnsNil(t *testing.T) {
 		order := GetGroupOrder()
 		assert.NotNil(t, order, "存的是 %s 时不能返回 nil", stored)
 		assert.Empty(t, order)
+	}
+}
+
+// withGroupRatioOption 临时改写 common.OptionMap["GroupRatio"]，并在用例结束后还原，
+// 免得污染同包里的其它用例（这一层是全局状态）。
+func withGroupRatioOption(t *testing.T, value string) {
+	t.Helper()
+
+	common.OptionMapRWMutex.Lock()
+	previous, had := common.OptionMap["GroupRatio"]
+	if common.OptionMap == nil {
+		common.OptionMap = map[string]string{}
+	}
+	common.OptionMap["GroupRatio"] = value
+	common.OptionMapRWMutex.Unlock()
+
+	t.Cleanup(func() {
+		common.OptionMapRWMutex.Lock()
+		defer common.OptionMapRWMutex.Unlock()
+		if had {
+			common.OptionMap["GroupRatio"] = previous
+			return
+		}
+		delete(common.OptionMap, "GroupRatio")
+	})
+}
+
+// 后台表格的行序就是 GroupRatio 的书写顺序（保存时按行序写入）。从未保存过顺序时，
+// 用户看到的顺序必须跟随后台表格，而不是 encoding/json 给 map 排出来的字母序——
+// 否则后台调完顺序，用户那边毫无变化，直到管理员碰巧又按了一次保存。
+func TestGetGroupOrderFallsBackToGroupRatioRowOrder(t *testing.T) {
+	original := GroupOrder2JSONString()
+	t.Cleanup(func() {
+		require.NoError(t, UpdateGroupOrderByJSONString(original))
+	})
+	require.NoError(t, UpdateGroupOrderByJSONString(`[]`))
+
+	// 键的书写顺序刻意不是字母序，也不含 auto。
+	withGroupRatioOption(t, `{"福利分组":0.15,"Zeta分组":1,"Alpha分组":0.5}`)
+
+	assert.Equal(t,
+		[]string{"福利分组", "Zeta分组", "Alpha分组"},
+		GetGroupOrder(),
+	)
+}
+
+// 保存过的顺序优先于回落的表格顺序。
+func TestGetGroupOrderPrefersTheSavedOrderOverTheTableOrder(t *testing.T) {
+	original := GroupOrder2JSONString()
+	t.Cleanup(func() {
+		require.NoError(t, UpdateGroupOrderByJSONString(original))
+	})
+
+	withGroupRatioOption(t, `{"甲":1,"乙":1}`)
+	require.NoError(t, UpdateGroupOrderByJSONString(`["乙","甲"]`))
+
+	assert.Equal(t, []string{"乙", "甲"}, GetGroupOrder())
+}
+
+// 回落源不可用时（没这个 option、不是对象、写坏了）必须是空数组而不是 nil，
+// 否则又会回到 null 那个问题上。
+func TestGetGroupOrderFallbackIsEmptyWhenGroupRatioIsUnusable(t *testing.T) {
+	original := GroupOrder2JSONString()
+	t.Cleanup(func() {
+		require.NoError(t, UpdateGroupOrderByJSONString(original))
+	})
+	require.NoError(t, UpdateGroupOrderByJSONString(`[]`))
+
+	for _, unusable := range []string{"", "null", `["not","an","object"]`, `{"a":`} {
+		withGroupRatioOption(t, unusable)
+		order := GetGroupOrder()
+		assert.NotNil(t, order, "GroupRatio 是 %q 时不能返回 nil", unusable)
+		if unusable == `{"a":` {
+			// 半截 JSON：读到哪算哪，"a" 是有效的部分结果。
+			assert.Equal(t, []string{"a"}, order)
+			continue
+		}
+		assert.Empty(t, order, "GroupRatio 是 %q 时应回落到空顺序", unusable)
 	}
 }
