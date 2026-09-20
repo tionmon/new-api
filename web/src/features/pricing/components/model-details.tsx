@@ -1053,7 +1053,12 @@ function ProviderGroupPricingSection(
   const showRechargePrice = props.showRechargePrice ?? false
 
   const availableGroups = useMemo(
-    () => getAvailableGroups(props.model, props.usableGroup || {}, props.groupOrder),
+    () =>
+      getAvailableGroups(
+        props.model,
+        props.usableGroup || {},
+        props.groupOrder
+      ),
     [props.model, props.usableGroup, props.groupOrder]
   )
 
