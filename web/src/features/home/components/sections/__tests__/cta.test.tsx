@@ -22,7 +22,15 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { CTA } from '../cta'
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, children, ...props }: { to: string; children?: React.ReactNode; [key: string]: unknown }) => (
+  Link: ({
+    to,
+    children,
+    ...props
+  }: {
+    to: string
+    children?: React.ReactNode
+    [key: string]: unknown
+  }) => (
     <a href={to} {...props}>
       {children}
     </a>
@@ -33,13 +41,15 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        'Just swap the base URL to get started': '只需替换 Base URL 即可无缝接入',
-        'Ready to Upgrade Your AI Infrastructure?': '准备好接入下一代 AI 基础设施了吗？',
+        'Just swap the base URL to get started':
+          '只需替换 Base URL 即可无缝接入',
+        'Ready to Upgrade Your AI Infrastructure?':
+          '准备好接入下一代 AI 基础设施了吗？',
         '100% OpenAI Compatible': '100% 官方协议兼容',
         'Multi-Account Disaster Recovery': '多账号智能防掉线',
         'Unified Token Settlement': '全模型统一透明计费',
         'Back to Top': '回到顶端',
-        'Create': '创建',
+        Create: '创建',
         'Sign In': '登录',
         'Go to Dashboard': '前往控制台',
         'Copy base URL': '复制 Base URL',
@@ -59,8 +69,12 @@ describe('CTA Component', () => {
   it('renders top badge, main title, and endpoint breakdown', () => {
     render(<CTA />)
 
-    expect(screen.getByText('只需替换 Base URL 即可无缝接入')).toBeInTheDocument()
-    expect(screen.getByText('准备好接入下一代 AI 基础设施了吗？')).toBeInTheDocument()
+    expect(
+      screen.getByText('只需替换 Base URL 即可无缝接入')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('准备好接入下一代 AI 基础设施了吗？')
+    ).toBeInTheDocument()
     expect(screen.getByText('https://tokenmetro.com')).toBeInTheDocument()
     expect(screen.getByText('/v1')).toBeInTheDocument()
   })
@@ -91,7 +105,9 @@ describe('CTA Component', () => {
     const signInBtn = screen.getByRole('button', { name: '登录' })
     expect(signInBtn).toHaveAttribute('href', '/sign-in')
 
-    expect(screen.queryByRole('button', { name: /前往控制台/ })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /前往控制台/ })
+    ).not.toBeInTheDocument()
   })
 
   it('renders Go to Dashboard button when authenticated', () => {
@@ -100,7 +116,11 @@ describe('CTA Component', () => {
     const dashboardBtn = screen.getByRole('button', { name: /前往控制台/ })
     expect(dashboardBtn).toHaveAttribute('href', '/dashboard')
 
-    expect(screen.queryByRole('button', { name: /创建/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '登录' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /创建/ })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '登录' })
+    ).not.toBeInTheDocument()
   })
 })

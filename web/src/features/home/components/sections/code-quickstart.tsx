@@ -16,9 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { Code2, Check } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Code2, Check } from 'lucide-react'
 
 import { AnimateInView } from '@/components/animate-in-view'
 import { CopyButton } from '@/components/copy-button'
@@ -36,7 +36,10 @@ export function CodeQuickstart() {
   const { t } = useTranslation()
   const [activeLang, setActiveLang] = useState<LanguageKey>('curl')
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://api.example.com'
+  const origin =
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : 'https://api.example.com'
 
   const examples: Record<LanguageKey, CodeExample> = {
     curl: {
@@ -122,18 +125,18 @@ func main() {
   const currentExample = examples[activeLang]
 
   return (
-    <section className='relative z-10 border-t border-border/40 px-6 py-20 md:py-28'>
+    <section className='border-border/40 relative z-10 border-t px-6 py-20 md:py-28'>
       <div className='mx-auto max-w-6xl'>
         {/* Section Header */}
         <AnimateInView className='mb-12 text-center'>
-          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3 py-1 text-xs font-medium text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 shadow-xs'>
+          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3 py-1 text-xs font-medium text-neutral-800 shadow-xs dark:border-white/10 dark:bg-white/5 dark:text-neutral-300'>
             <Code2 className='size-3.5 text-neutral-600 dark:text-neutral-400' />
             <span>{t('Instant Drop-in Replacement')}</span>
           </div>
-          <h2 className='text-2xl font-bold tracking-tight text-foreground md:text-3xl'>
+          <h2 className='text-foreground text-2xl font-bold tracking-tight md:text-3xl'>
             {t('Change 1 Line of Code, Access Every Model')}
           </h2>
-          <p className='mx-auto mt-3 max-w-2xl text-sm text-muted-foreground/80 md:text-base'>
+          <p className='text-muted-foreground/80 mx-auto mt-3 max-w-2xl text-sm md:text-base'>
             {t(
               'Fully compatible with the official OpenAI SDK and ecosystem tools. Switch between OpenAI, Claude, DeepSeek, and Gemini without rewriting your business logic.'
             )}
@@ -141,37 +144,39 @@ func main() {
         </AnimateInView>
 
         {/* Code Showcase Container */}
-        <div className='mx-auto max-w-4xl overflow-hidden rounded-2xl border border-border/60 bg-neutral-950 text-neutral-100 shadow-2xl'>
+        <div className='border-border/60 mx-auto max-w-4xl overflow-hidden rounded-2xl border bg-neutral-950 text-neutral-100 shadow-2xl'>
           {/* Top Bar with Language Tabs */}
           <div className='flex flex-wrap items-center justify-between border-b border-neutral-800/80 bg-neutral-900/90 px-4 py-2.5 backdrop-blur-md'>
             <div className='flex items-center gap-2'>
-              <div className='flex items-center gap-1.5 pr-3 border-r border-neutral-800'>
+              <div className='flex items-center gap-1.5 border-r border-neutral-800 pr-3'>
                 <span className='size-2.5 rounded-full bg-red-500/80' />
                 <span className='size-2.5 rounded-full bg-amber-500/80' />
                 <span className='size-2.5 rounded-full bg-emerald-500/80' />
               </div>
               <div className='flex items-center gap-1 overflow-x-auto'>
-                {(['curl', 'python', 'javascript', 'golang'] as const).map((lang) => (
-                  <button
-                    key={lang}
-                    type='button'
-                    onClick={() => setActiveLang(lang)}
-                    className={cn(
-                      'rounded-md px-3 py-1 text-xs font-medium transition-all',
-                      activeLang === lang
-                        ? 'bg-neutral-800 text-white shadow-xs'
-                        : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
-                    )}
-                  >
-                    {examples[lang].title}
-                  </button>
-                ))}
+                {(['curl', 'python', 'javascript', 'golang'] as const).map(
+                  (lang) => (
+                    <button
+                      key={lang}
+                      type='button'
+                      onClick={() => setActiveLang(lang)}
+                      className={cn(
+                        'rounded-md px-3 py-1 text-xs font-medium transition-all',
+                        activeLang === lang
+                          ? 'bg-neutral-800 text-white shadow-xs'
+                          : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
+                      )}
+                    >
+                      {examples[lang].title}
+                    </button>
+                  )
+                )}
               </div>
             </div>
 
-            <div className='flex items-center gap-3 mt-2 sm:mt-0'>
+            <div className='mt-2 flex items-center gap-3 sm:mt-0'>
               <span className='inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400'>
-                <span className='size-1.5 rounded-full bg-emerald-400 animate-pulse' />
+                <span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
                 200 OK • 12ms
               </span>
               <CopyButton
@@ -192,9 +197,11 @@ func main() {
           <div className='flex flex-wrap items-center justify-between border-t border-neutral-800/80 bg-neutral-900/50 px-5 py-3 text-xs text-neutral-400'>
             <div className='flex items-center gap-2'>
               <Check className='size-4 text-emerald-400' />
-              <span>{t('Native streaming (SSE) supported across all models')}</span>
+              <span>
+                {t('Native streaming (SSE) supported across all models')}
+              </span>
             </div>
-            <span className='text-[11px] text-neutral-500 font-mono'>
+            <span className='font-mono text-[11px] text-neutral-500'>
               {origin}/v1
             </span>
           </div>

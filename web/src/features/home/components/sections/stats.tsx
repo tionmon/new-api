@@ -120,15 +120,15 @@ export function Stats(_props: StatsProps) {
   ]
 
   return (
-    <div className='relative z-10 border-y border-border/40 bg-muted/15 py-12 md:py-16'>
+    <div className='border-border/40 bg-muted/15 relative z-10 border-y py-12 md:py-16'>
       <div className='mx-auto max-w-6xl px-6'>
         <div className='grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8'>
           {stats.map((s) => (
             <div
               key={s.label}
-              className='flex flex-col items-center text-center p-4 rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xs transition-all duration-300 hover:border-primary/30'
+              className='border-border/40 bg-card/40 hover:border-primary/30 flex flex-col items-center rounded-2xl border p-4 text-center backdrop-blur-xs transition-all duration-300'
             >
-              <span className='bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-3xl font-extrabold tracking-tight text-transparent md:text-4xl'>
+              <span className='from-foreground via-foreground to-muted-foreground bg-gradient-to-br bg-clip-text text-3xl font-extrabold tracking-tight text-transparent md:text-4xl'>
                 <Counter
                   end={s.end}
                   prefix={s.prefix}
@@ -136,10 +136,10 @@ export function Stats(_props: StatsProps) {
                   decimals={s.decimals}
                 />
               </span>
-              <span className='mt-2 text-sm font-semibold text-foreground'>
+              <span className='text-foreground mt-2 text-sm font-semibold'>
                 {s.label}
               </span>
-              <span className='mt-1 text-xs text-muted-foreground line-clamp-1'>
+              <span className='text-muted-foreground mt-1 line-clamp-1 text-xs'>
                 {s.highlight}
               </span>
             </div>

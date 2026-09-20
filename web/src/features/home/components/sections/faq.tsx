@@ -16,8 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useTranslation } from 'react-i18next'
 import { HelpCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { AnimateInView } from '@/components/animate-in-view'
 import {
@@ -78,20 +78,20 @@ export function FAQ({ isStandalone }: FAQProps = {}) {
       className={`relative z-10 px-6 ${
         isStandalone
           ? 'pt-28 pb-24 md:pt-36 md:pb-32'
-          : 'border-t border-border/40 bg-muted/5 py-20 md:py-28'
+          : 'border-border/40 bg-muted/5 border-t py-20 md:py-28'
       }`}
     >
       <div className='mx-auto max-w-4xl'>
         {/* Header */}
         <AnimateInView className='mb-12 text-center'>
-          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3 py-1 text-xs font-medium text-neutral-800 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 shadow-xs'>
+          <div className='mb-3 inline-flex items-center gap-1.5 rounded-full border border-neutral-300/80 bg-neutral-100/90 px-3 py-1 text-xs font-medium text-neutral-800 shadow-xs dark:border-white/10 dark:bg-white/5 dark:text-neutral-300'>
             <HelpCircle className='size-3.5 text-neutral-600 dark:text-neutral-400' />
             <span>{t('Frequently Asked Questions')}</span>
           </div>
-          <h2 className='text-2xl font-bold tracking-tight text-foreground md:text-3xl'>
+          <h2 className='text-foreground text-2xl font-bold tracking-tight md:text-3xl'>
             {t('Everything You Need to Know')}
           </h2>
-          <p className='mx-auto mt-2 max-w-xl text-sm text-muted-foreground/80 md:text-base'>
+          <p className='text-muted-foreground/80 mx-auto mt-2 max-w-xl text-sm md:text-base'>
             {t(
               'Common questions about integration, multi-channel routing, deployment, and security.'
             )}
@@ -99,14 +99,21 @@ export function FAQ({ isStandalone }: FAQProps = {}) {
         </AnimateInView>
 
         {/* Accordion */}
-        <AnimateInView animation='fade-up' className='rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur-xs shadow-xs dark:bg-card/30'>
-          <Accordion className='divide-y divide-border/40'>
+        <AnimateInView
+          animation='fade-up'
+          className='border-border/60 bg-card/60 dark:bg-card/30 rounded-2xl border p-6 shadow-xs backdrop-blur-xs'
+        >
+          <Accordion className='divide-border/40 divide-y'>
             {faqs.map((faq, idx) => (
-              <AccordionItem key={faq.q} value={`item-${idx}`} className='py-2 first:pt-0 last:pb-0'>
-                <AccordionTrigger className='text-base font-medium hover:no-underline py-3 text-foreground hover:text-foreground/75 transition-colors'>
+              <AccordionItem
+                key={faq.q}
+                value={`item-${idx}`}
+                className='py-2 first:pt-0 last:pb-0'
+              >
+                <AccordionTrigger className='text-foreground hover:text-foreground/75 py-3 text-base font-medium transition-colors hover:no-underline'>
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className='text-sm text-muted-foreground leading-relaxed pt-1 pb-3'>
+                <AccordionContent className='text-muted-foreground pt-1 pb-3 text-sm leading-relaxed'>
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

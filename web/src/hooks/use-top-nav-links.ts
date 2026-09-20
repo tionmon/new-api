@@ -88,7 +88,11 @@ export function useTopNavLinks(): TopNavLink[] {
 
   // Docs
   if (modules?.docs !== false) {
-    if (docsLink && docsLink.trim() !== '' && docsLink !== 'https://docs.newapi.pro') {
+    if (
+      docsLink &&
+      docsLink.trim() !== '' &&
+      docsLink !== 'https://docs.newapi.pro'
+    ) {
       links.push({
         title: t('Docs'),
         href: docsLink,

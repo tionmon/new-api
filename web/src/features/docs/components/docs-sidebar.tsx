@@ -16,8 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState } from 'react'
 import { Search, Sparkles, X } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Input } from '@/components/ui/input'
@@ -68,18 +68,18 @@ export function DocsSidebar({
       {/* Search Filter Header */}
       <div className='p-4 pb-2'>
         <div className='relative'>
-          <Search className='absolute left-2.5 top-2.5 size-3.5 text-muted-foreground' />
+          <Search className='text-muted-foreground absolute top-2.5 left-2.5 size-3.5' />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('Search docs...')}
-            className='h-8.5 pl-8 pr-7 text-xs bg-muted/30 border-border/70 rounded-lg'
+            className='bg-muted/30 border-border/70 h-8.5 rounded-lg pr-7 pl-8 text-xs'
           />
           {searchQuery && (
             <button
               type='button'
               onClick={() => setSearchQuery('')}
-              className='absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground'
+              className='text-muted-foreground hover:text-foreground absolute top-2.5 right-2.5'
             >
               <X className='size-3.5' />
             </button>
@@ -88,15 +88,15 @@ export function DocsSidebar({
       </div>
 
       {/* Nav Tree */}
-      <div className='flex-1 overflow-y-auto px-3 py-2 space-y-5 text-xs'>
+      <div className='flex-1 space-y-5 overflow-y-auto px-3 py-2 text-xs'>
         {filteredCategories.length === 0 ? (
-          <div className='text-center py-8 text-muted-foreground text-xs'>
+          <div className='text-muted-foreground py-8 text-center text-xs'>
             {t('No matching docs found')}
           </div>
         ) : (
           filteredCategories.map((cat) => (
             <div key={cat.id} className='space-y-1'>
-              <div className='px-2.5 py-1 text-[11px] font-semibold text-foreground tracking-wider uppercase opacity-75'>
+              <div className='text-foreground px-2.5 py-1 text-[11px] font-semibold tracking-wider uppercase opacity-75'>
                 {isZh ? cat.titleKey : cat.titleEn}
               </div>
               <div className='space-y-0.5'>

@@ -30,15 +30,14 @@ vi.mock('react-i18next', () => ({
         'Multi-Account Smart Failover: Seamless AI Requests That Never Drop':
           '多账号智能容灾：保障请求稳定不掉线',
         'Simulate Failure': '模拟故障',
-        'Multiple Upstream Channels Running Concurrently':
-          '多条上游并发运行',
+        'Multiple Upstream Channels Running Concurrently': '多条上游并发运行',
         '1. Your Apps & Tools': '1. 你的应用与工具',
         'API Smart Routing Hub': 'API 智能路由中枢',
         'Multi-Account Upstream Pool': '上游多账号与容灾池',
         'Microsoft Azure Cloud': '微软云 Azure',
         'Smooth & Connected': '绿色畅通 • 极速传输',
-        'Cutoff': '线路切断',
-        'Active': '在线运行',
+        Cutoff: '线路切断',
+        Active: '在线运行',
       }
       return dict[key] ?? key
     },

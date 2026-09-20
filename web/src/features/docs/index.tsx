@@ -16,8 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState } from 'react'
 import { ChevronRight, Menu, X } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
@@ -70,14 +70,13 @@ export function Docs() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='relative min-h-[calc(100vh-4rem)] pt-16 text-foreground'>
-
+      <div className='text-foreground relative min-h-[calc(100vh-4rem)] pt-16'>
         {/* Mobile Header Bar */}
-        <div className='lg:hidden flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-background/80 backdrop-blur-md sticky top-16 z-20'>
-          <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
-            <span className='font-medium text-foreground'>{t('Docs')}</span>
+        <div className='border-border/60 bg-background/80 sticky top-16 z-20 flex items-center justify-between border-b px-4 py-2.5 backdrop-blur-md lg:hidden'>
+          <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
+            <span className='text-foreground font-medium'>{t('Docs')}</span>
             <ChevronRight className='size-3' />
-            <span className='truncate max-w-[160px]'>{activeTopicTitle}</span>
+            <span className='max-w-[160px] truncate'>{activeTopicTitle}</span>
           </div>
           <Button
             variant='ghost'
@@ -96,21 +95,21 @@ export function Docs() {
         {/* Mobile Sidebar Overlay */}
         {mobileMenuOpen && (
           <div
-            className='lg:hidden fixed inset-0 top-28 z-30 bg-background/95 backdrop-blur-md p-4 overflow-y-auto'
+            className='bg-background/95 fixed inset-0 top-28 z-30 overflow-y-auto p-4 backdrop-blur-md lg:hidden'
             onClick={() => setMobileMenuOpen(false)}
           >
             <div onClick={(e) => e.stopPropagation()}>
               <DocsSidebar
                 activeTopicId={activeTopicId}
                 onSelectTopic={handleSelectTopic}
-                className='w-full border-none h-auto static'
+                className='static h-auto w-full border-none'
               />
             </div>
           </div>
         )}
 
         {/* Main 3-Column Wiki Container */}
-        <div className='max-w-[1400px] mx-auto flex items-start'>
+        <div className='mx-auto flex max-w-[1400px] items-start'>
           {/* Left Sidebar (Desktop) */}
           <DocsSidebar
             activeTopicId={activeTopicId}
@@ -119,15 +118,15 @@ export function Docs() {
           />
 
           {/* Center Main Content Area */}
-          <main className='flex-1 min-w-0 px-5 sm:px-8 md:px-12 py-8 max-w-4xl'>
+          <main className='max-w-4xl min-w-0 flex-1 px-5 py-8 sm:px-8 md:px-12'>
             {/* Breadcrumb Navigation */}
-            <div className='flex items-center gap-1.5 text-xs text-muted-foreground mb-6 font-medium'>
+            <div className='text-muted-foreground mb-6 flex items-center gap-1.5 text-xs font-medium'>
               <span className='hover:text-foreground cursor-pointer'>
                 {t('Documentation')}
               </span>
-              <ChevronRight className='size-3 text-muted-foreground/60' />
+              <ChevronRight className='text-muted-foreground/60 size-3' />
               <span>{activeCategoryTitle}</span>
-              <ChevronRight className='size-3 text-muted-foreground/60' />
+              <ChevronRight className='text-muted-foreground/60 size-3' />
               <span className='text-foreground font-semibold'>
                 {activeTopicTitle}
               </span>

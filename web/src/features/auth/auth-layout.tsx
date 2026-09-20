@@ -35,7 +35,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   const { systemName, logo, loading } = useSystemConfig()
 
   return (
-    <div className='bg-background text-foreground relative min-h-svh w-full overflow-x-clip isolate flex flex-col justify-center items-center'>
+    <div className='bg-background text-foreground relative isolate flex min-h-svh w-full flex-col items-center justify-center overflow-x-clip'>
       {/* Interactive Grid Background focused on the central auth card */}
       <InteractiveGridBackground focused />
 
@@ -69,12 +69,12 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* Central Focused Auth Card */}
-      <div className='container relative z-10 flex min-h-svh items-center justify-center py-16 sm:py-12'>
+      <div className='relative z-10 container flex min-h-svh items-center justify-center py-16 sm:py-12'>
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className='mx-auto flex w-full flex-col justify-center rounded-3xl border border-border/70 bg-card/85 p-6 shadow-2xl shadow-black/[0.04] backdrop-blur-xl sm:w-[480px] sm:p-8 dark:border-white/10 dark:bg-card/40'
+          className='border-border/70 bg-card/85 dark:bg-card/40 mx-auto flex w-full flex-col justify-center rounded-3xl border p-6 shadow-2xl shadow-black/[0.04] backdrop-blur-xl sm:w-[480px] sm:p-8 dark:border-white/10'
         >
           {children}
         </motion.div>

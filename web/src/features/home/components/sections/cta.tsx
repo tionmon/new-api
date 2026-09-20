@@ -16,15 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import {
-  ArrowRight,
-  ArrowUp,
-  CheckCircle2,
-  Coins,
-  Zap,
-} from 'lucide-react'
+import { ArrowRight, ArrowUp, CheckCircle2, Coins, Zap } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AnimateInView } from '@/components/animate-in-view'
@@ -100,11 +94,16 @@ export function CTA(props: CTAProps) {
   }
 
   return (
-    <section className={cn('relative z-10 overflow-hidden px-6 py-16 md:py-24', props.className)}>
+    <section
+      className={cn(
+        'relative z-10 overflow-hidden px-6 py-16 md:py-24',
+        props.className
+      )}
+    >
       <div className='mx-auto max-w-4xl'>
         <AnimateInView
           animation='scale-in'
-          className='relative overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-b from-card via-card/90 to-card/60 p-6 text-center shadow-xl md:p-10 dark:from-neutral-900/90 dark:via-neutral-900/60 dark:to-neutral-950/90 backdrop-blur-sm'
+          className='border-border/80 from-card via-card/90 to-card/60 relative overflow-hidden rounded-3xl border bg-gradient-to-b p-6 text-center shadow-xl backdrop-blur-sm md:p-10 dark:from-neutral-900/90 dark:via-neutral-900/60 dark:to-neutral-950/90'
         >
           {/* Ambient Glows */}
           <div
@@ -113,11 +112,11 @@ export function CTA(props: CTAProps) {
           />
           <div
             aria-hidden='true'
-            className='pointer-events-none absolute -bottom-24 right-10 -z-10 h-64 w-72 rounded-full bg-neutral-400/10 blur-3xl dark:bg-white/5'
+            className='pointer-events-none absolute right-10 -bottom-24 -z-10 h-64 w-72 rounded-full bg-neutral-400/10 blur-3xl dark:bg-white/5'
           />
           <div
             aria-hidden='true'
-            className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_85%)]'
+            className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_85%)] bg-[size:24px_24px] dark:bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)]'
           />
 
           {/* Top Status Header */}
@@ -129,7 +128,7 @@ export function CTA(props: CTAProps) {
             <span>{t('Just swap the base URL to get started')}</span>
           </div>
 
-          <h2 className='mt-4 text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>
+          <h2 className='text-foreground mt-4 text-2xl font-bold tracking-tight sm:text-3xl'>
             {t('Ready to Upgrade Your AI Infrastructure?')}
           </h2>
 
@@ -138,16 +137,22 @@ export function CTA(props: CTAProps) {
             <div
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
-              className='group relative flex w-full max-w-xl items-center justify-between gap-3 rounded-2xl border border-neutral-200/90 bg-white/70 px-4 py-3 shadow-2xs backdrop-blur-md transition-all duration-300 hover:border-neutral-300 hover:shadow-md dark:border-neutral-800/90 dark:bg-neutral-900/70 dark:hover:border-neutral-700 sm:px-5 sm:py-3.5'
+              className='group relative flex w-full max-w-xl items-center justify-between gap-3 rounded-2xl border border-neutral-200/90 bg-white/70 px-4 py-3 shadow-2xs backdrop-blur-md transition-all duration-300 hover:border-neutral-300 hover:shadow-md sm:px-5 sm:py-3.5 dark:border-neutral-800/90 dark:bg-neutral-900/70 dark:hover:border-neutral-700'
             >
               {/* Code Endpoint with Hand-Typed Animation */}
               <div className='flex min-w-0 items-center overflow-x-auto font-mono text-sm tracking-tight select-all sm:text-base'>
                 <span className='sr-only'>{endpointUrl}</span>
-                <span aria-hidden='true' className='text-neutral-500 dark:text-neutral-400'>
+                <span
+                  aria-hidden='true'
+                  className='text-neutral-500 dark:text-neutral-400'
+                >
                   {typedBase}
                 </span>
                 {typedPath && (
-                  <span aria-hidden='true' className='font-semibold text-amber-500 dark:text-amber-400'>
+                  <span
+                    aria-hidden='true'
+                    className='font-semibold text-amber-500 dark:text-amber-400'
+                  >
                     {typedPath}
                   </span>
                 )}
@@ -155,7 +160,9 @@ export function CTA(props: CTAProps) {
                   aria-hidden='true'
                   className={cn(
                     'ml-0.5 inline-block h-4 w-[2px] bg-amber-500 align-middle select-none dark:bg-amber-400 sm:h-5',
-                    charCount === endpointUrl.length && !isDeleting ? 'animate-pulse' : 'opacity-100'
+                    charCount === endpointUrl.length && !isDeleting
+                      ? 'animate-pulse'
+                      : 'opacity-100'
                   )}
                 />
               </div>
@@ -174,55 +181,61 @@ export function CTA(props: CTAProps) {
           </div>
 
           {/* Three Compact Micro Features (占比小一些) */}
-          <div className='mt-6 grid grid-cols-1 gap-2.5 text-left sm:grid-cols-3 max-w-3xl mx-auto'>
-            <div className='flex items-start gap-2.5 rounded-xl border border-border/50 bg-card/40 p-2.5 sm:p-3 backdrop-blur-xs transition-colors hover:bg-card/70'>
-              <CheckCircle2 className='size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5' />
+          <div className='mx-auto mt-6 grid max-w-3xl grid-cols-1 gap-2.5 text-left sm:grid-cols-3'>
+            <div className='border-border/50 bg-card/40 hover:bg-card/70 flex items-start gap-2.5 rounded-xl border p-2.5 backdrop-blur-xs transition-colors sm:p-3'>
+              <CheckCircle2 className='mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400' />
               <div className='min-w-0'>
-                <h3 className='text-xs font-semibold tracking-tight text-foreground'>
+                <h3 className='text-foreground text-xs font-semibold tracking-tight'>
                   {t('100% OpenAI Compatible')}
                 </h3>
-                <p className='mt-0.5 text-[11px] leading-relaxed text-muted-foreground'>
-                  {t('Standard OpenAI API format, drop-in replacement for any client without code changes.')}
+                <p className='text-muted-foreground mt-0.5 text-[11px] leading-relaxed'>
+                  {t(
+                    'Standard OpenAI API format, drop-in replacement for any client without code changes.'
+                  )}
                 </p>
               </div>
             </div>
 
-            <div className='flex items-start gap-2.5 rounded-xl border border-border/50 bg-card/40 p-2.5 sm:p-3 backdrop-blur-xs transition-colors hover:bg-card/70'>
-              <Zap className='size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5' />
+            <div className='border-border/50 bg-card/40 hover:bg-card/70 flex items-start gap-2.5 rounded-xl border p-2.5 backdrop-blur-xs transition-colors sm:p-3'>
+              <Zap className='mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400' />
               <div className='min-w-0'>
-                <h3 className='text-xs font-semibold tracking-tight text-foreground'>
+                <h3 className='text-foreground text-xs font-semibold tracking-tight'>
                   {t('Multi-Account Disaster Recovery')}
                 </h3>
-                <p className='mt-0.5 text-[11px] leading-relaxed text-muted-foreground'>
-                  {t('Multi-account concurrent routing with sub-second failover, ensuring 99.99% enterprise SLA.')}
+                <p className='text-muted-foreground mt-0.5 text-[11px] leading-relaxed'>
+                  {t(
+                    'Multi-account concurrent routing with sub-second failover, ensuring 99.99% enterprise SLA.'
+                  )}
                 </p>
               </div>
             </div>
 
-            <div className='flex items-start gap-2.5 rounded-xl border border-border/50 bg-card/40 p-2.5 sm:p-3 backdrop-blur-xs transition-colors hover:bg-card/70'>
-              <Coins className='size-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5' />
+            <div className='border-border/50 bg-card/40 hover:bg-card/70 flex items-start gap-2.5 rounded-xl border p-2.5 backdrop-blur-xs transition-colors sm:p-3'>
+              <Coins className='mt-0.5 size-4 shrink-0 text-indigo-600 dark:text-indigo-400' />
               <div className='min-w-0'>
-                <h3 className='text-xs font-semibold tracking-tight text-foreground'>
+                <h3 className='text-foreground text-xs font-semibold tracking-tight'>
                   {t('Unified Token Settlement')}
                 </h3>
-                <p className='mt-0.5 text-[11px] leading-relaxed text-muted-foreground'>
-                  {t('Access GPT, Claude, DeepSeek, and Gemini with clear, pay-as-you-go quota metering.')}
+                <p className='text-muted-foreground mt-0.5 text-[11px] leading-relaxed'>
+                  {t(
+                    'Access GPT, Claude, DeepSeek, and Gemini with clear, pay-as-you-go quota metering.'
+                  )}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Action Buttons: Scroll to Top + Create / Sign In */}
-          <div className='mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-border/40 pt-6'>
+          <div className='border-border/40 mt-8 flex flex-wrap items-center justify-center gap-3 border-t pt-6'>
             <Button
               variant='outline'
               size='icon'
               onClick={scrollToTop}
-              className='group size-10 rounded-xl border-neutral-200/80 bg-background/80 hover:bg-neutral-100 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900/60 dark:hover:bg-neutral-800/80 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 active:scale-95'
+              className='group bg-background/80 size-10 rounded-xl border-neutral-200/80 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-100 active:scale-95 dark:border-neutral-800 dark:bg-neutral-900/60 dark:hover:bg-neutral-800/80'
               title={t('Back to Top')}
               aria-label={t('Back to Top')}
             >
-              <ArrowUp className='size-4 text-neutral-700 dark:text-neutral-300 transition-transform duration-200 group-hover:-translate-y-0.5' />
+              <ArrowUp className='size-4 text-neutral-700 transition-transform duration-200 group-hover:-translate-y-0.5 dark:text-neutral-300' />
             </Button>
 
             {props.isAuthenticated ? (
@@ -244,7 +257,7 @@ export function CTA(props: CTAProps) {
                 </Button>
                 <Button
                   variant='outline'
-                  className='h-10 rounded-xl border-neutral-200/80 bg-background/80 px-5 text-sm font-semibold text-foreground shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-100/80 active:scale-[0.98] dark:border-neutral-800 dark:bg-neutral-900/60 dark:hover:border-neutral-700 dark:hover:bg-neutral-800/80'
+                  className='bg-background/80 text-foreground h-10 rounded-xl border-neutral-200/80 px-5 text-sm font-semibold shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-100/80 active:scale-[0.98] dark:border-neutral-800 dark:bg-neutral-900/60 dark:hover:border-neutral-700 dark:hover:bg-neutral-800/80'
                   render={<Link to='/sign-in' />}
                 >
                   {t('Sign In')}

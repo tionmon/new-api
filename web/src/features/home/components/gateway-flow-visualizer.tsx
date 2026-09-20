@@ -16,8 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import {
   ArrowDown,
   ArrowRight,
@@ -25,6 +23,8 @@ import {
   Cpu,
   ShieldCheck,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AnimateInView } from '@/components/animate-in-view'
 import { getLobeIcon } from '@/lib/lobe-icon'
@@ -46,7 +46,7 @@ export function GatewayFlowVisualizer() {
   return (
     <section
       id='solutions'
-      className='scroll-mt-16 md:scroll-mt-20 border-border/40 bg-card/10 relative z-10 overflow-hidden border-t py-16 md:py-24'
+      className='border-border/40 bg-card/10 relative z-10 scroll-mt-16 overflow-hidden border-t py-16 md:scroll-mt-20 md:py-24'
     >
       {/* 60fps/120fps hardware-accelerated linear flow with zero stutter/jitter */}
       <style>{`
@@ -93,7 +93,9 @@ export function GatewayFlowVisualizer() {
             <span>{t('Smart Multi-Route Failover • Always Connected')}</span>
           </div>
           <h2 className='text-foreground text-2xl font-bold tracking-tight md:text-3xl'>
-            {t('Multi-Account Smart Failover: Seamless AI Requests That Never Drop')}
+            {t(
+              'Multi-Account Smart Failover: Seamless AI Requests That Never Drop'
+            )}
           </h2>
           <p className='text-muted-foreground/90 mx-auto mt-3 max-w-2xl text-sm leading-relaxed md:text-base'>
             {t(
@@ -107,7 +109,7 @@ export function GatewayFlowVisualizer() {
           {/* Continuous Penetrating Flow Guideline (Through the entire component width) */}
           <div
             aria-hidden='true'
-            className='pointer-events-none absolute -left-12 -right-12 top-1/2 -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent dark:via-emerald-500/10'
+            className='pointer-events-none absolute top-1/2 -right-12 -left-12 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent dark:via-emerald-500/10'
           />
 
           {/* Top Control Bar: Stable layout, fixed text, smooth toggle switch */}
@@ -126,7 +128,7 @@ export function GatewayFlowVisualizer() {
             <button
               type='button'
               onClick={() => setFailoverActive(!failoverActive)}
-              className='inline-flex h-9 items-center justify-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/80 cursor-pointer select-none'
+              className='border-border/60 bg-muted/40 text-foreground hover:bg-muted/80 inline-flex h-9 cursor-pointer items-center justify-center gap-3 rounded-xl border px-3.5 text-xs font-medium transition-colors select-none'
               title={t('Simulate Failure')}
             >
               <span className='text-muted-foreground text-xs font-medium'>
@@ -135,7 +137,9 @@ export function GatewayFlowVisualizer() {
               <div
                 className={cn(
                   'relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-300',
-                  failoverActive ? 'bg-amber-500' : 'bg-neutral-300 dark:bg-neutral-700'
+                  failoverActive
+                    ? 'bg-amber-500'
+                    : 'bg-neutral-300 dark:bg-neutral-700'
                 )}
               >
                 <span
@@ -216,16 +220,16 @@ export function GatewayFlowVisualizer() {
             {/* Stream Connector 1: Dev Tools -> Center Hub */}
             <div className='flex flex-col items-center justify-center py-2 lg:col-span-1 lg:py-0'>
               <div className='hidden w-full flex-col items-center justify-center gap-1.5 lg:flex'>
-                <div className='relative h-1 w-full overflow-hidden rounded-full bg-neutral-200/90 dark:bg-neutral-800/90 shadow-inner'>
+                <div className='relative h-1 w-full overflow-hidden rounded-full bg-neutral-200/90 shadow-inner dark:bg-neutral-800/90'>
                   <div className='linear-pulse-beam absolute inset-y-0 w-24 rounded-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]' />
                 </div>
-                <ArrowRight className='size-3 text-emerald-600 dark:text-emerald-400 opacity-80' />
+                <ArrowRight className='size-3 text-emerald-600 opacity-80 dark:text-emerald-400' />
               </div>
               <div className='flex w-full flex-col items-center justify-center gap-1 py-2 lg:hidden'>
-                <div className='relative h-8 w-1 overflow-hidden rounded-full bg-neutral-200/90 dark:bg-neutral-800/90 shadow-inner'>
+                <div className='relative h-8 w-1 overflow-hidden rounded-full bg-neutral-200/90 shadow-inner dark:bg-neutral-800/90'>
                   <div className='linear-pulse-beam absolute inset-x-0 h-8 rounded-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]' />
                 </div>
-                <ArrowDown className='size-3 text-emerald-600 dark:text-emerald-400 opacity-80' />
+                <ArrowDown className='size-3 text-emerald-600 opacity-80 dark:text-emerald-400' />
               </div>
             </div>
 
@@ -246,7 +250,7 @@ export function GatewayFlowVisualizer() {
               </p>
 
               {/* Stable status badge (Never jumps or changes height) */}
-              <div className='border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mt-3.5 flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium'>
+              <div className='mt-3.5 flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400'>
                 <CheckCircle2 className='size-3.5 shrink-0 text-emerald-500' />
                 <span>{t('Active-Active Concurrency Pooling')}</span>
               </div>
@@ -341,10 +345,10 @@ export function GatewayFlowVisualizer() {
 
               {/* Mobile vertical conduit */}
               <div className='flex w-full flex-col items-center justify-center gap-1 py-2 lg:hidden'>
-                <div className='relative h-8 w-1 overflow-hidden rounded-full bg-neutral-200/90 dark:bg-neutral-800/90 shadow-inner'>
+                <div className='relative h-8 w-1 overflow-hidden rounded-full bg-neutral-200/90 shadow-inner dark:bg-neutral-800/90'>
                   <div className='linear-pulse-beam absolute inset-x-0 h-8 rounded-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]' />
                 </div>
-                <ArrowDown className='size-3 text-emerald-600 dark:text-emerald-400 opacity-80' />
+                <ArrowDown className='size-3 text-emerald-600 opacity-80 dark:text-emerald-400' />
               </div>
             </div>
 
@@ -360,7 +364,7 @@ export function GatewayFlowVisualizer() {
               </div>
 
               {/* Channel 1: GPT Pro 20X - 01 */}
-              <div className='relative group'>
+              <div className='group relative'>
                 <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
                   <div className='flex min-w-0 items-center gap-2.5'>
                     <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
@@ -375,7 +379,7 @@ export function GatewayFlowVisualizer() {
                       </div>
                     </div>
                   </div>
-                  <div className='flex items-center gap-1.5 shrink-0'>
+                  <div className='flex shrink-0 items-center gap-1.5'>
                     <span
                       className={cn(
                         'size-2 rounded-full transition-colors duration-500',
@@ -409,7 +413,7 @@ export function GatewayFlowVisualizer() {
               </div>
 
               {/* Channel 2: GPT Pro 20X - 02 */}
-              <div className='relative group'>
+              <div className='group relative'>
                 <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
                   <div className='flex min-w-0 items-center gap-2.5'>
                     <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
@@ -424,7 +428,7 @@ export function GatewayFlowVisualizer() {
                       </div>
                     </div>
                   </div>
-                  <div className='flex items-center gap-1.5 shrink-0'>
+                  <div className='flex shrink-0 items-center gap-1.5'>
                     <span className='size-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500' />
                     <span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
                       {t('Active')}
@@ -433,12 +437,12 @@ export function GatewayFlowVisualizer() {
                 </div>
                 <div
                   aria-hidden='true'
-                  className='pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block bg-gradient-to-r from-emerald-500/50 to-transparent'
+                  className='pointer-events-none absolute top-1/2 -right-6 hidden h-[1.5px] w-6 -translate-y-1/2 bg-gradient-to-r from-emerald-500/50 to-transparent lg:block'
                 />
               </div>
 
               {/* Channel 3: GPT Pro 20X - 03 */}
-              <div className='relative group'>
+              <div className='group relative'>
                 <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
                   <div className='flex min-w-0 items-center gap-2.5'>
                     <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
@@ -453,7 +457,7 @@ export function GatewayFlowVisualizer() {
                       </div>
                     </div>
                   </div>
-                  <div className='flex items-center gap-1.5 shrink-0'>
+                  <div className='flex shrink-0 items-center gap-1.5'>
                     <span className='size-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500' />
                     <span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
                       {t('Active')}
@@ -462,12 +466,12 @@ export function GatewayFlowVisualizer() {
                 </div>
                 <div
                   aria-hidden='true'
-                  className='pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block bg-gradient-to-r from-emerald-500/50 to-transparent'
+                  className='pointer-events-none absolute top-1/2 -right-6 hidden h-[1.5px] w-6 -translate-y-1/2 bg-gradient-to-r from-emerald-500/50 to-transparent lg:block'
                 />
               </div>
 
               {/* Channel 4: 微软云 Azure */}
-              <div className='relative group'>
+              <div className='group relative'>
                 <div className='border-border/50 bg-muted/20 flex h-[54px] items-center justify-between rounded-xl border px-3 transition-colors'>
                   <div className='flex min-w-0 items-center gap-2.5'>
                     <div className='border-border/40 bg-card flex size-7 shrink-0 items-center justify-center rounded-lg border'>
@@ -482,7 +486,7 @@ export function GatewayFlowVisualizer() {
                       </div>
                     </div>
                   </div>
-                  <div className='flex items-center gap-1.5 shrink-0'>
+                  <div className='flex shrink-0 items-center gap-1.5'>
                     <span className='size-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500' />
                     <span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400'>
                       {t('Active')}
@@ -491,7 +495,7 @@ export function GatewayFlowVisualizer() {
                 </div>
                 <div
                   aria-hidden='true'
-                  className='pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 hidden h-[1.5px] w-6 lg:block bg-gradient-to-r from-emerald-500/50 to-transparent'
+                  className='pointer-events-none absolute top-1/2 -right-6 hidden h-[1.5px] w-6 -translate-y-1/2 bg-gradient-to-r from-emerald-500/50 to-transparent lg:block'
                 />
               </div>
             </div>

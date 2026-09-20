@@ -16,7 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState } from 'react'
 import {
   CheckCircle2,
   Cpu,
@@ -27,6 +26,7 @@ import {
   Terminal,
   Zap,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
@@ -68,27 +68,27 @@ export function DocsCodexScript() {
     <div className='space-y-10'>
       {/* Header section */}
       <div>
-        <div className='flex flex-wrap items-center gap-2 mb-3'>
+        <div className='mb-3 flex flex-wrap items-center gap-2'>
           <Badge
             variant='outline'
             className='bg-foreground/5 text-foreground font-mono text-xs'
           >
             v1.0.0
           </Badge>
-          <Badge className='bg-foreground text-background font-medium text-xs'>
+          <Badge className='bg-foreground text-background text-xs font-medium'>
             ⭐ {t('Recommended')}
           </Badge>
           <Badge
             variant='outline'
-            className='border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-xs'
+            className='border-emerald-500/40 text-xs text-emerald-600 dark:text-emerald-400'
           >
             {t('Zero-Config Auto-Deploy')}
           </Badge>
         </div>
-        <h1 className='text-2xl font-bold tracking-tight md:text-3xl text-foreground'>
+        <h1 className='text-foreground text-2xl font-bold tracking-tight md:text-3xl'>
           {t('Codex CLI One-Click Setup Script')}
         </h1>
-        <p className='mt-2 text-sm md:text-base text-muted-foreground leading-relaxed'>
+        <p className='text-muted-foreground mt-2 text-sm leading-relaxed md:text-base'>
           {t(
             'Automated configuration script for developers. Performs Node.js LTS runtime check, global Codex CLI deployment, gateway Base URL and API Key persistence, and end-to-end connectivity testing.'
           )}
@@ -96,34 +96,34 @@ export function DocsCodexScript() {
       </div>
 
       {/* Interactive Command Builder */}
-      <div className='overflow-hidden rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm shadow-xs'>
-        <div className='border-b border-border/60 bg-muted/30 px-5 py-3.5 flex items-center justify-between'>
+      <div className='border-border/80 bg-card/60 overflow-hidden rounded-xl border shadow-xs backdrop-blur-sm'>
+        <div className='border-border/60 bg-muted/30 flex items-center justify-between border-b px-5 py-3.5'>
           <div className='flex items-center gap-2'>
-            <Terminal className='size-4 text-foreground' />
-            <span className='text-sm font-semibold text-foreground'>
+            <Terminal className='text-foreground size-4' />
+            <span className='text-foreground text-sm font-semibold'>
               {t('Interactive One-Click Command Generator')}
             </span>
           </div>
-          <span className='text-xs text-muted-foreground hidden sm:inline'>
+          <span className='text-muted-foreground hidden text-xs sm:inline'>
             {t('Real-time parameter generation')}
           </span>
         </div>
 
-        <div className='p-5 md:p-6 space-y-6'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className='space-y-6 p-5 md:p-6'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             {/* Base URL input */}
             <div className='space-y-1.5'>
-              <Label className='text-xs font-medium text-foreground flex items-center gap-1.5'>
-                <Globe2 className='size-3.5 text-muted-foreground' />
+              <Label className='text-foreground flex items-center gap-1.5 text-xs font-medium'>
+                <Globe2 className='text-muted-foreground size-3.5' />
                 {t('Gateway Base URL')}
               </Label>
               <Input
                 value={gatewayUrl}
                 onChange={(e) => setGatewayUrl(e.target.value)}
                 placeholder='https://api.your-domain.com'
-                className='font-mono text-xs h-9 bg-background/80'
+                className='bg-background/80 h-9 font-mono text-xs'
               />
-              <p className='text-[11px] text-muted-foreground'>
+              <p className='text-muted-foreground text-[11px]'>
                 {t(
                   'Defaults to current site domain, script normalizes trailing slashes automatically'
                 )}
@@ -132,8 +132,8 @@ export function DocsCodexScript() {
 
             {/* API Key input */}
             <div className='space-y-1.5'>
-              <Label className='text-xs font-medium text-foreground flex items-center gap-1.5'>
-                <KeyRound className='size-3.5 text-muted-foreground' />
+              <Label className='text-foreground flex items-center gap-1.5 text-xs font-medium'>
+                <KeyRound className='text-muted-foreground size-3.5' />
                 {t('API Key (Bearer Token)')}
               </Label>
               <Input
@@ -141,9 +141,9 @@ export function DocsCodexScript() {
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder='sk-...'
                 type='password'
-                className='font-mono text-xs h-9 bg-background/80'
+                className='bg-background/80 h-9 font-mono text-xs'
               />
-              <p className='text-[11px] text-muted-foreground'>
+              <p className='text-muted-foreground text-[11px]'>
                 {t(
                   'Create in Tokens console, placeholder will be used if omitted'
                 )}
@@ -153,14 +153,14 @@ export function DocsCodexScript() {
 
           {/* Options toggles */}
           <div className='flex flex-wrap items-center gap-4 pt-1'>
-            <label className='flex items-center gap-2 cursor-pointer text-xs select-none'>
+            <label className='flex cursor-pointer items-center gap-2 text-xs select-none'>
               <input
                 type='checkbox'
                 checked={useCnMirror}
                 onChange={(e) => setUseCnMirror(e.target.checked)}
-                className='rounded border-border accent-foreground size-3.5'
+                className='border-border accent-foreground size-3.5 rounded'
               />
-              <span className='font-medium text-foreground'>
+              <span className='text-foreground font-medium'>
                 {t('China Mainland Mirror Acceleration (--mirror cn)')}
               </span>
               <span className='text-muted-foreground text-[11px]'>
@@ -168,22 +168,22 @@ export function DocsCodexScript() {
               </span>
             </label>
 
-            <label className='flex items-center gap-2 cursor-pointer text-xs select-none'>
+            <label className='flex cursor-pointer items-center gap-2 text-xs select-none'>
               <input
                 type='checkbox'
                 checked={testOnly}
                 onChange={(e) => setTestOnly(e.target.checked)}
-                className='rounded border-border accent-foreground size-3.5'
+                className='border-border accent-foreground size-3.5 rounded'
               />
-              <span className='font-medium text-foreground'>
+              <span className='text-foreground font-medium'>
                 {t('Test connectivity only (--test-only)')}
               </span>
             </label>
           </div>
 
           {/* Generated Command Box */}
-          <div className='relative rounded-lg border border-border bg-neutral-950 text-neutral-100 p-4 font-mono text-xs overflow-x-auto shadow-inner'>
-            <div className='flex items-center justify-between pb-2 mb-2 border-b border-neutral-800/80 text-[11px] text-neutral-400'>
+          <div className='border-border relative overflow-x-auto rounded-lg border bg-neutral-950 p-4 font-mono text-xs text-neutral-100 shadow-inner'>
+            <div className='mb-2 flex items-center justify-between border-b border-neutral-800/80 pb-2 text-[11px] text-neutral-400'>
               <div className='flex items-center gap-2'>
                 <span className='inline-block size-2.5 rounded-full bg-emerald-500' />
                 <span>Bash / Zsh / Linux / macOS</span>
@@ -192,10 +192,10 @@ export function DocsCodexScript() {
                 value={generatedCommand}
                 variant='ghost'
                 size='sm'
-                className='h-7 text-neutral-300 hover:text-white hover:bg-neutral-800'
+                className='h-7 text-neutral-300 hover:bg-neutral-800 hover:text-white'
               />
             </div>
-            <code className='block break-all select-all leading-relaxed whitespace-pre-wrap text-emerald-400 dark:text-emerald-300'>
+            <code className='block leading-relaxed break-all whitespace-pre-wrap text-emerald-400 select-all dark:text-emerald-300'>
               {generatedCommand}
             </code>
           </div>
@@ -205,63 +205,63 @@ export function DocsCodexScript() {
       {/* Script Execution Pipeline */}
       <div className='space-y-4'>
         <div className='flex items-center gap-2'>
-          <Zap className='size-4 text-foreground' />
-          <h2 className='text-lg font-semibold text-foreground'>
+          <Zap className='text-foreground size-4' />
+          <h2 className='text-foreground text-lg font-semibold'>
             {t('Full Script Execution Pipeline')}
           </h2>
         </div>
-        <p className='text-xs text-muted-foreground'>
+        <p className='text-muted-foreground text-xs'>
           {t(
             'Includes robust fault-tolerance and SHA-256 integrity verification with zero manual intervention.'
           )}
         </p>
 
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2'>
-          <div className='rounded-lg border border-border/80 bg-card/40 p-4 space-y-2'>
+        <div className='grid grid-cols-1 gap-3.5 pt-2 md:grid-cols-3'>
+          <div className='border-border/80 bg-card/40 space-y-2 rounded-lg border p-4'>
             <div className='flex items-center justify-between'>
-              <span className='font-mono text-xs font-bold text-muted-foreground'>
+              <span className='text-muted-foreground font-mono text-xs font-bold'>
                 01
               </span>
-              <Cpu className='size-4 text-muted-foreground' />
+              <Cpu className='text-muted-foreground size-4' />
             </div>
-            <h3 className='text-sm font-semibold text-foreground'>
+            <h3 className='text-foreground text-sm font-semibold'>
               {t('Node.js Runtime Detection & Install')}
             </h3>
-            <p className='text-xs text-muted-foreground leading-relaxed'>
+            <p className='text-muted-foreground text-xs leading-relaxed'>
               {t(
                 'Verifies Node.js >= 18; if missing, downloads LTS package with SHA-256 validation to ~/.local/lib/nodejs without root.'
               )}
             </p>
           </div>
 
-          <div className='rounded-lg border border-border/80 bg-card/40 p-4 space-y-2'>
+          <div className='border-border/80 bg-card/40 space-y-2 rounded-lg border p-4'>
             <div className='flex items-center justify-between'>
-              <span className='font-mono text-xs font-bold text-muted-foreground'>
+              <span className='text-muted-foreground font-mono text-xs font-bold'>
                 02
               </span>
-              <Terminal className='size-4 text-muted-foreground' />
+              <Terminal className='text-muted-foreground size-4' />
             </div>
-            <h3 className='text-sm font-semibold text-foreground'>
+            <h3 className='text-foreground text-sm font-semibold'>
               {t('Codex CLI Deployment & Config')}
             </h3>
-            <p className='text-xs text-muted-foreground leading-relaxed'>
+            <p className='text-muted-foreground text-xs leading-relaxed'>
               {t(
                 'Installs @openai/codex globally and generates ~/.codex/config.toml with current gateway endpoint.'
               )}
             </p>
           </div>
 
-          <div className='rounded-lg border border-border/80 bg-card/40 p-4 space-y-2'>
+          <div className='border-border/80 bg-card/40 space-y-2 rounded-lg border p-4'>
             <div className='flex items-center justify-between'>
-              <span className='font-mono text-xs font-bold text-muted-foreground'>
+              <span className='text-muted-foreground font-mono text-xs font-bold'>
                 03
               </span>
-              <ShieldCheck className='size-4 text-muted-foreground' />
+              <ShieldCheck className='text-muted-foreground size-4' />
             </div>
-            <h3 className='text-sm font-semibold text-foreground'>
+            <h3 className='text-foreground text-sm font-semibold'>
               {t('Environment Persistence & Self-Check')}
             </h3>
-            <p className='text-xs text-muted-foreground leading-relaxed'>
+            <p className='text-muted-foreground text-xs leading-relaxed'>
               {t(
                 'Detects Bash, Zsh, or Fish config to persist OPENAI_BASE_URL and CODEX_API_KEY, verifying API reachability.'
               )}
@@ -273,15 +273,15 @@ export function DocsCodexScript() {
       {/* CLI Parameter Matrix */}
       <div className='space-y-4'>
         <div className='flex items-center gap-2'>
-          <FileCode2 className='size-4 text-foreground' />
-          <h2 className='text-lg font-semibold text-foreground'>
+          <FileCode2 className='text-foreground size-4' />
+          <h2 className='text-foreground text-lg font-semibold'>
             {t('CLI Parameter Matrix & Options')}
           </h2>
         </div>
 
-        <div className='overflow-x-auto rounded-lg border border-border/80'>
+        <div className='border-border/80 overflow-x-auto rounded-lg border'>
           <table className='w-full text-left text-xs'>
-            <thead className='border-b border-border/80 bg-muted/40 font-medium text-foreground'>
+            <thead className='border-border/80 bg-muted/40 text-foreground border-b font-medium'>
               <tr>
                 <th className='px-4 py-2.5'>{t('Parameter')}</th>
                 <th className='px-4 py-2.5'>{t('Type')}</th>
@@ -289,29 +289,33 @@ export function DocsCodexScript() {
                 <th className='px-4 py-2.5'>{t('Description')}</th>
               </tr>
             </thead>
-            <tbody className='divide-y divide-border/60 text-muted-foreground'>
+            <tbody className='divide-border/60 text-muted-foreground divide-y'>
               <tr>
-                <td className='px-4 py-2.5 font-mono text-foreground font-medium'>
+                <td className='text-foreground px-4 py-2.5 font-mono font-medium'>
                   --url &lt;URL&gt;
                 </td>
                 <td className='px-4 py-2.5 font-mono text-[11px]'>string</td>
-                <td className='px-4 py-2.5 font-mono text-[11px]'>交互式输入</td>
+                <td className='px-4 py-2.5 font-mono text-[11px]'>
+                  交互式输入
+                </td>
                 <td className='px-4 py-2.5'>
                   {t('API Gateway Base URL (auto trims trailing slashes)')}
                 </td>
               </tr>
               <tr>
-                <td className='px-4 py-2.5 font-mono text-foreground font-medium'>
+                <td className='text-foreground px-4 py-2.5 font-mono font-medium'>
                   --key &lt;KEY&gt;
                 </td>
                 <td className='px-4 py-2.5 font-mono text-[11px]'>string</td>
-                <td className='px-4 py-2.5 font-mono text-[11px]'>交互式输入</td>
+                <td className='px-4 py-2.5 font-mono text-[11px]'>
+                  交互式输入
+                </td>
                 <td className='px-4 py-2.5'>
                   {t('API Key token (supports sk- format and system tokens)')}
                 </td>
               </tr>
               <tr>
-                <td className='px-4 py-2.5 font-mono text-foreground font-medium'>
+                <td className='text-foreground px-4 py-2.5 font-mono font-medium'>
                   --mirror cn
                 </td>
                 <td className='px-4 py-2.5 font-mono text-[11px]'>flag</td>
@@ -323,7 +327,7 @@ export function DocsCodexScript() {
                 </td>
               </tr>
               <tr>
-                <td className='px-4 py-2.5 font-mono text-foreground font-medium'>
+                <td className='text-foreground px-4 py-2.5 font-mono font-medium'>
                   --test-only
                 </td>
                 <td className='px-4 py-2.5 font-mono text-[11px]'>flag</td>
@@ -335,7 +339,7 @@ export function DocsCodexScript() {
                 </td>
               </tr>
               <tr>
-                <td className='px-4 py-2.5 font-mono text-foreground font-medium'>
+                <td className='text-foreground px-4 py-2.5 font-mono font-medium'>
                   --help, -h
                 </td>
                 <td className='px-4 py-2.5 font-mono text-[11px]'>flag</td>
@@ -350,28 +354,28 @@ export function DocsCodexScript() {
       </div>
 
       {/* Manual Setup Fallback */}
-      <div className='rounded-xl border border-border/80 bg-muted/20 p-5 space-y-3.5'>
-        <div className='flex items-center gap-2 text-foreground font-semibold text-sm'>
+      <div className='border-border/80 bg-muted/20 space-y-3.5 rounded-xl border p-5'>
+        <div className='text-foreground flex items-center gap-2 text-sm font-semibold'>
           <CheckCircle2 className='size-4 text-emerald-500' />
           {t('Manual Configuration Reference')}
         </div>
-        <p className='text-xs text-muted-foreground'>
+        <p className='text-muted-foreground text-xs'>
           {t(
             'In restricted environments or Windows systems, you can manually set the following environment variables:'
           )}
         </p>
 
-        <div className='relative rounded-lg border border-border bg-neutral-950 p-3.5 font-mono text-xs text-neutral-200 overflow-x-auto'>
-          <div className='absolute right-2 top-2'>
+        <div className='border-border relative overflow-x-auto rounded-lg border bg-neutral-950 p-3.5 font-mono text-xs text-neutral-200'>
+          <div className='absolute top-2 right-2'>
             <CopyButton
               value={`export OPENAI_BASE_URL="${cleanUrl}/v1"\nexport OPENAI_API_KEY="${effectiveKey}"\nexport CODEX_API_KEY="${effectiveKey}"`}
               variant='ghost'
               size='sm'
-              className='h-7 text-neutral-300 hover:text-white hover:bg-neutral-800'
+              className='h-7 text-neutral-300 hover:bg-neutral-800 hover:text-white'
             />
           </div>
           <pre className='text-emerald-400'>
-{`export OPENAI_BASE_URL="${cleanUrl}/v1"
+            {`export OPENAI_BASE_URL="${cleanUrl}/v1"
 export OPENAI_API_KEY="${effectiveKey}"
 export CODEX_API_KEY="${effectiveKey}"`}
           </pre>

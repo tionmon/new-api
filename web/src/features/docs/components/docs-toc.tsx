@@ -73,28 +73,28 @@ export function DocsToc({ activeTopicId, className }: DocsTocProps) {
         className
       )}
     >
-      <div className='flex items-center gap-1.5 font-semibold text-foreground mb-3 text-[11px] uppercase tracking-wider opacity-75'>
+      <div className='text-foreground mb-3 flex items-center gap-1.5 text-[11px] font-semibold tracking-wider uppercase opacity-75'>
         <List className='size-3.5' />
         {t('On This Page')}
       </div>
 
-      <nav className='space-y-2 border-l border-border/60 pl-3'>
+      <nav className='border-border/60 space-y-2 border-l pl-3'>
         {headings.map((item) => (
           <div
             key={item.id}
-            className='text-muted-foreground hover:text-foreground transition-colors cursor-default select-none'
+            className='text-muted-foreground hover:text-foreground cursor-default transition-colors select-none'
           >
             {item.title}
           </div>
         ))}
       </nav>
 
-      <div className='mt-8 pt-4 border-t border-border/60 space-y-2 text-[11px] text-muted-foreground'>
+      <div className='border-border/60 text-muted-foreground mt-8 space-y-2 border-t pt-4 text-[11px]'>
         <a
           href='https://github.com/QuantumNous/new-api'
           target='_blank'
           rel='noopener noreferrer'
-          className='flex items-center gap-1 hover:text-foreground transition-colors'
+          className='hover:text-foreground flex items-center gap-1 transition-colors'
         >
           <span>{t('Suggest edits on GitHub')}</span>
           <MoveUpRight className='size-3' />
