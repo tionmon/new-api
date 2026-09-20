@@ -17,6 +17,12 @@ func GetGroupOrder() []string {
 	groupOrderMutex.RLock()
 	defer groupOrderMutex.RUnlock()
 
+	// Callers put this straight into an API envelope that declares an array, so an
+	// unconfigured order has to be an empty list rather than null.
+	if groupOrder == nil {
+		return []string{}
+	}
+
 	return slices.Clone(groupOrder)
 }
 

@@ -81,3 +81,19 @@ func TestGroupOrder2JSONStringAlwaysEmitsJSONArray(t *testing.T) {
 			"存的是 %s 时，序列化结果必须是 JSON 数组", stored)
 	}
 }
+
+// 两个用户侧接口把这个值直接放进信封，前端按「字符串数组」声明类型；未配置时返回
+// nil 会序列化成 null，与声明不符，也会让将来的调用方踩空。
+func TestGetGroupOrderNeverReturnsNil(t *testing.T) {
+	original := GroupOrder2JSONString()
+	t.Cleanup(func() {
+		require.NoError(t, UpdateGroupOrderByJSONString(original))
+	})
+
+	for _, stored := range []string{`null`, `[]`} {
+		require.NoError(t, UpdateGroupOrderByJSONString(stored))
+		order := GetGroupOrder()
+		assert.NotNil(t, order, "存的是 %s 时不能返回 nil", stored)
+		assert.Empty(t, order)
+	}
+}

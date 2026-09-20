@@ -28,7 +28,13 @@ export function sortByGroupOrder<T>(
   getGroupName: (item: T) => string,
   groupOrder: readonly string[] | undefined
 ): T[] {
-  if (!groupOrder?.length || items.length < 2) {
+  // Runs on data straight off the wire, so check the shape instead of trusting the
+  // annotation: a JSON string would pass a length check and then fail in forEach.
+  if (
+    !Array.isArray(groupOrder) ||
+    groupOrder.length === 0 ||
+    items.length < 2
+  ) {
     return items
   }
 

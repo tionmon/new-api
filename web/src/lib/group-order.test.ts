@@ -92,4 +92,14 @@ describe('sortByGroupOrder', () => {
 
     expect(names).toEqual(['a', 'b'])
   })
+
+  // 这个值直接来自网络，声明成数组不等于运行时就是数组：只查 length 的话，一个
+  // JSON 字符串能通过守卫，然后在 forEach 上抛错、整页白屏。
+  it('leaves the list untouched when the value is not an array', () => {
+    const names = ['a', 'b']
+
+    expect(sortByGroupOrder(names, byName, 'ab' as unknown as string[])).toBe(
+      names
+    )
+  })
 })

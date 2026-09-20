@@ -7009,6 +7009,7 @@
     "Session rules": "会话规则",
     "Fix the Request Header Override JSON first": "请先修正请求头覆盖的 JSON",
     "Group display order": "分组显示顺序",
-    "Users pick groups in this order. It does not change the auto group routing priority.": "用户在控制台里按这个顺序看分组。它不影响自动分组的选路优先级。"
+    "Users pick groups in this order. It does not change the auto group routing priority.": "用户在控制台里按这个顺序看分组。它不影响自动分组的选路优先级。",
+    "JSON list of group names in the order users see them. Groups missing from the list follow the listed ones.": "JSON 格式的分组名列表，按用户在控制台里看到的顺序排列。列表中未出现的分组排在已列出的分组之后。"
   }
 }

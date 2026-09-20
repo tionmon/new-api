@@ -7009,6 +7009,7 @@
     "Session rules": "Session rules",
     "Fix the Request Header Override JSON first": "Fix the Request Header Override JSON first",
     "Group display order": "Group display order",
-    "Users pick groups in this order. It does not change the auto group routing priority.": "Users pick groups in this order. It does not change the auto group routing priority."
+    "Users pick groups in this order. It does not change the auto group routing priority.": "Users pick groups in this order. It does not change the auto group routing priority.",
+    "JSON list of group names in the order users see them. Groups missing from the list follow the listed ones.": "JSON list of group names in the order users see them. Groups missing from the list follow the listed ones."
   }
 }
