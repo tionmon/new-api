@@ -701,7 +701,14 @@ function GroupPricingTable({
             reorder={{
               values: visibleRows.map((row) => row._id),
               onReorder: reorderRows,
-              handleLabel: t('Drag to move'),
+              labelFor: (id) =>
+                t('Drag {{group}} to reorder', {
+                  group:
+                    rows.find((row) => row._id === id)?.name.trim() ||
+                    t('Group name'),
+                }),
+              onMove: (id, direction) =>
+                moveRow(String(id), direction === 'up' ? -1 : 1),
             }}
             tableProps={{ 'aria-label': t('Pricing groups') }}
             data={visibleRows}

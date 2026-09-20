@@ -283,11 +283,6 @@ try {
     })
   }
 
-  /** Finder for click(): the first element matching a CSS selector. */
-  function bySelector(selector) {
-    return `document.querySelector(${JSON.stringify(selector)})`
-  }
-
   /** Finder for click(): the first button whose text matches, reporting the
    *  labels on screen when none does. */
   function byButtonText(pattern) {
@@ -396,7 +391,9 @@ try {
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     // Labels are localized, so target the controls positionally: the first two
     // buttons in the sort cell are move-up and move-down.
-    const buttonsOf = row => Array.from(row.querySelectorAll('button'));
+    // 把手也是一个 button，按位置取会把它当成上移键——按内容排除掉它。
+    const buttonsOf = row => Array.from(row.querySelectorAll('button'))
+      .filter(b => !b.querySelector('svg.lucide-grip-vertical'));
     return {
       handles: rows.every(row => row.querySelector('svg.lucide-grip-vertical')),
       upDisabled: buttonsOf(rows[0])[0]?.disabled === true,
@@ -415,6 +412,49 @@ try {
     initialNames.join(' → ')
   )
   check(initial.handles, 'every row has a drag handle')
+  const gripShape = await evaluate(`(() => {
+    const grip = document.querySelector('#group-pricing-order-affordance tbody tr svg.lucide-grip-vertical')?.closest('button');
+    return grip ? { tag: grip.tagName, label: grip.getAttribute('aria-label') || '' } : null;
+  })()`)
+  check(
+    gripShape?.tag === 'BUTTON' && gripShape.label.length > 0,
+    'the grip is a labelled button, so reordering is not pointer-only',
+    JSON.stringify(gripShape)
+  )
+
+  // 方向键：先上移再下移，验证两种方向都能搬动行，最后把顺序还原，
+  // 免得影响后面那几条依赖行序的断言。
+  const beforeKeys = await readTableGroupNames()
+  const focused = await evaluate(`(() => {
+    const grip = document.querySelectorAll('#group-pricing-order-affordance tbody tr')[1]
+      .querySelector('svg.lucide-grip-vertical').closest('button');
+    grip.focus();
+    return document.activeElement === grip;
+  })()`)
+  for (const key of ['ArrowUp', 'ArrowDown']) {
+    const code = key === 'ArrowUp' ? 38 : 40
+    await send('Input.dispatchKeyEvent', {
+      type: 'keyDown',
+      key,
+      code: key,
+      windowsVirtualKeyCode: code,
+      nativeVirtualKeyCode: code,
+    })
+    await send('Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      key,
+      code: key,
+      windowsVirtualKeyCode: code,
+      nativeVirtualKeyCode: code,
+    })
+    await pause(250)
+  }
+  const afterKeys = await readTableGroupNames()
+  check(
+    focused && JSON.stringify(afterKeys) === JSON.stringify(beforeKeys),
+    'arrow keys on the focused grip move the row and move it back',
+    `focused=${focused} ${beforeKeys.slice(0, 2).join(' → ')} ⇒ ${afterKeys.slice(0, 2).join(' → ')} ⇒ 还原`
+  )
   check(
     initial.upDisabled && initial.downDisabled && initial.upEnabled,
     'up is disabled on the first row, down on the last, and enabled in between',
@@ -433,22 +473,36 @@ try {
   await capture('group-pricing-desktop')
 
   // ---- JSON mode exposes the same order as a plain array ----
+  // 表格行序必须在切模式之前读：切到 JSON 后那张表就不在 DOM 里了。
+  const tableOrderBeforeJson = await readTableGroupNames()
   await click(byButtonText(zhButtonPattern('Switch to JSON')))
   const jsonMode = await evaluate(`(() => {
     const field = document.querySelector('textarea[name="GroupOrder"]');
     if (!field) return {found: false};
-    return {found: true, value: field.value.replace(/\\s+/g, '')};
+    const squash = v => v.replace(/\\s+/g, '');
+    return {found: true, value: squash(field.value)};
   })()`)
+  // 断言成「与表格当前行序一致」而不是「为空」：后者只是这个 fixture 初值的巧合，
+  // 而前者才是这条检查真正要证明的事——两个模式的顺序是同一个。
   check(
-    jsonMode.found && jsonMode.value === '[]',
-    'JSON mode exposes the stored group order',
-    JSON.stringify(jsonMode)
+    jsonMode.found &&
+      jsonMode.value ===
+        JSON.stringify(
+          tableOrderBeforeJson.map((name) => name.replaceAll(/\s+/g, ''))
+        ),
+    'JSON mode exposes the same order the table shows',
+    `${jsonMode.value}  vs  ${JSON.stringify(tableOrderBeforeJson)}`
   )
   await click(byButtonText(zhButtonPattern('Switch to Visual')))
 
   // ---- Moving the second row up rewrites GroupOrder, and the users' order follows ----
+  // 行内第一个 button 现在是拖拽把手，这里要的是上移键，所以按内容排除把手。
   await click(
-    bySelector('#group-pricing-order-affordance tbody tr:nth-child(2) button')
+    `(() => {
+      const row = document.querySelector('#group-pricing-order-affordance tbody tr:nth-child(2)');
+      return Array.from(row.querySelectorAll('button'))
+        .filter(b => !b.querySelector('svg.lucide-grip-vertical'))[0];
+    })()`
   )
   const afterMove = await readTableGroupNames()
   check(
@@ -494,12 +548,19 @@ try {
   )
 
   // ---- Dragging a handle onto another row reorders the rows the same way ----
+  await viewport(1440, 1200)
+  await evaluate(`(() => {
+    const rows = Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr'));
+    rows[rows.length - 1]?.scrollIntoView({block: 'end'});
+    return true;
+  })()`)
+  await pause(300)
   const dragFrom = await evaluate(`(() => {
     const rows = Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr'));
     const centre = el => { const r = el.getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.top + r.height/2)} };
     return {
       handle: centre(rows[0].querySelector('svg.lucide-grip-vertical').parentElement),
-      to: (() => { const r = rows[2].getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.bottom + 6)}; })(),
+      to: (() => { const r = rows[rows.length - 1].getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.bottom + 6)}; })(),
     };
   })()`)
   const beforeDrag = await readTableGroupNames()
@@ -513,14 +574,9 @@ try {
   )
   check(
     JSON.stringify(afterDrag) ===
-      JSON.stringify([
-        beforeDrag[1],
-        beforeDrag[2],
-        beforeDrag[0],
-        ...beforeDrag.slice(3),
-      ]),
+      JSON.stringify([...beforeDrag.slice(1), beforeDrag[0]]),
     'dragging a row handle reorders the table',
-    `${beforeDrag.slice(0, 3).join(' → ')}  ⇒  ${afterDrag.slice(0, 3).join(' → ')}`
+    `${beforeDrag.slice(0, 2).join(' → ')} … ⇒ … ${afterDrag.slice(-2).join(' → ')}`
   )
 
   // ---- The user-facing model square lists groups in the admin's order ----

@@ -86,8 +86,12 @@ test('moving a group up reorders the rows and saves the display order', async ()
   const user = userEvent.setup()
   render(<PricingFixture initial={twoGroups} />)
 
-  // Row buttons are ordered: move up, move down, details, delete.
-  await user.click(within(dataRow(1)).getAllByRole('button')[0])
+  // 行内按钮顺序是：拖拽把手、上移、下移、详情、删除——把手也是 button，先排除它。
+  const moveUp = within(dataRow(1))
+    .getAllByRole('button')
+    .find((button) => !button.querySelector('svg.lucide-grip-vertical'))
+  if (!moveUp) throw new Error('row has no move-up button')
+  await user.click(moveUp)
 
   expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
   expect(JSON.parse(savedSettings().GroupOrder)).toEqual(['b', 'a'])

@@ -20,6 +20,7 @@ import { GripVertical } from 'lucide-react'
 import { Reorder, useDragControls } from 'motion/react'
 import * as React from 'react'
 
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -44,8 +45,17 @@ type StaticDataTableReorder = {
   values: React.Key[]
   /** Called once on drop with the new order. */
   onReorder: (values: React.Key[]) => void
-  /** Accessible name for the grip, already translated by the caller. */
-  handleLabel?: string
+  /**
+   * Accessible name for a row's grip, already translated by the caller. The grip is
+   * a real button (upstream's sortable item is one too), so this is what a screen
+   * reader announces and what the tooltip shows.
+   */
+  labelFor?: (value: React.Key) => string
+  /**
+   * Gives the grip's arrow keys something to do — the keyboard equivalent of a drag,
+   * so reordering is not pointer-only.
+   */
+  onMove?: (value: React.Key, direction: 'up' | 'down') => void
 }
 
 type StaticDataTableBaseProps = {
@@ -222,7 +232,15 @@ function StaticDataTableRow<TData>({
       )}
     >
       {column.dragHandle && reorder ? (
-        <DragHandle controls={dragControls} label={reorder.handleLabel} />
+        <DragHandle
+          controls={dragControls}
+          label={reorder.labelFor?.(value)}
+          onMove={
+            reorder.onMove
+              ? (direction) => reorder.onMove?.(value, direction)
+              : undefined
+          }
+        />
       ) : null}
       {renderStaticCellContent(column, row, index)}
     </TableCell>
@@ -234,6 +252,9 @@ function StaticDataTableRow<TData>({
         as='tr'
         value={value}
         dragListener={false}
+        // No momentum: a flicked row should land where it was dropped, not coast past
+        // it. Upstream's sortable item disables it for the same reason.
+        dragMomentum={false}
         dragControls={dragControls}
         className={cn(
           'bg-background relative [&>td]:align-middle',
@@ -251,17 +272,27 @@ function StaticDataTableRow<TData>({
 /**
  * The grip that starts a row drag. Rendered by the table (not the caller) so the
  * motion drag controls stay inside the row they move.
+ *
+ * A real button rather than a decorative span, matching the sortable item upstream
+ * uses for the auto-group list: it is reachable by keyboard, its arrow keys move the
+ * row, and its accessible name says which row it moves.
  */
 function DragHandle({
   controls,
   label,
+  onMove,
 }: {
   controls: ReturnType<typeof useDragControls>
   label?: string
+  onMove?: (direction: 'up' | 'down') => void
 }) {
   return (
-    <span
-      aria-hidden='true'
+    <Button
+      type='button'
+      variant='ghost'
+      size='icon-sm'
+      className='text-muted-foreground mr-1 cursor-grab touch-none align-middle active:cursor-grabbing'
+      aria-label={label}
       title={label}
       // The pointer must not reach the row's own handlers, or starting a drag would
       // also focus/activate whatever sits underneath the grip.
@@ -269,10 +300,15 @@ function DragHandle({
         event.stopPropagation()
         controls.start(event)
       }}
-      className='text-muted-foreground hover:text-foreground mr-1 inline-flex cursor-grab touch-none align-middle active:cursor-grabbing'
+      onKeyDown={(event) => {
+        if (!onMove) return
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+        event.preventDefault()
+        onMove(event.key === 'ArrowUp' ? 'up' : 'down')
+      }}
     >
-      <GripVertical className='h-4 w-4' />
-    </span>
+      <GripVertical className='h-4 w-4' aria-hidden='true' />
+    </Button>
   )
 }
 
