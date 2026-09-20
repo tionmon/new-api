@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-09-20 源码集成记录
+
+- 本次来源：`QuantumNous/new-api` 官方 `main` 提交 `972aed1972820389ea0b603ca58f03f846fbf790`，包含最新发布版 `v1.0.0-rc.38` 及其后的 8 个修复提交；相对当前 fork 的官方基线新增 34 个提交。
+- 保留 TokenMetro 已验收的单屏首页、深浅主题、公共导航与卡网购码钱包；底层支付模块和服务器支付配置不变。`DocsLink` 默认空值及仅启用英/中文的 fork 决策保持不变。
+- 语言包按 key 三方合并，两种在用语言完整纳入官方新增文案；其余五种已停用的前端语言维持删除。
+- 验证：`bun install --frozen-lockfile`、`bun run typecheck`、`bun run build`、`bun run test`（1960/1960）、`bun run test:browser`（首页与钱包 55 项）通过；根模块与 `relaykit` 的 `GOWORK=off go vet ./...` / `go build ./...`、`make test` 通过；另完成 Linux/amd64 构建。
+- 数据库：真实 SQLite 3.50.4、MySQL 9.7.1、PostgreSQL 15.19 的请求策略、系统任务、迁移/唯一性和任务结算测试通过。临时数据库分别演练新建、由原 fork 升级，以及重复迁移；MySQL/PostgreSQL 同时覆盖独立日志库，保留合成用户的余额、分组、旧 OAuth 绑定、配置与消费日志。没有使用生产数据，未验证最低兼容版本或 ClickHouse。
+- 全仓 lint 不是全绿：同一工具检查官方最新源码 188 errors，集成版 186 errors；逐项无新增 error。TokenMetro 自定义源码 0 errors / 3 warnings（管理员 HTML 和 ID 查询提示）。
+- 本记录只证明源码集成及本地验收。推送 GitHub 不等于生产容器已更新；服务器发布需单独执行备份、构建和切换。
+
 ## 1. 核心项目与环境元数据 (Environment Metadata)
 
 ### 1.1 Git 仓库架构
