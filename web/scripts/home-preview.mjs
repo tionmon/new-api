@@ -328,12 +328,26 @@ const AUTH_ROUTES = {
   '/api/user/self': ok(USER),
 }
 
+// 登录页也得能进去：POST 登录一律回假 session（任何账号密码都算数）。不收下这一步，
+// 人肉预览时一旦被弹到 /login 就再也进不来——本地没有 Turnstile、也没有真后端。
+const LOGIN_ROUTES = new Set([
+  '/api/user/login',
+  '/api/user/login/2fa',
+  '/api/user/register',
+])
+
 function handleApi(req, res, pathname) {
   const methodAllowed =
     req.method === 'GET' ||
-    (req.method === 'POST' && pathname === '/api/user/auth/refresh')
+    (req.method === 'POST' &&
+      (pathname === '/api/user/auth/refresh' || LOGIN_ROUTES.has(pathname)))
   if (!methodAllowed) {
     sendJson(res, 405, { success: false, message: 'read-only preview' })
+    return
+  }
+
+  if (req.method === 'POST' && LOGIN_ROUTES.has(pathname)) {
+    sendJson(res, 200, ok(BUNDLE))
     return
   }
 
