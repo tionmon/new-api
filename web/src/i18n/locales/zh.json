@@ -7007,6 +7007,8 @@
     "Maximum cached sessions": "最多缓存会话数",
     "Enable session affinity": "启用会话保持",
     "Session rules": "会话规则",
-    "Fix the Request Header Override JSON first": "请先修正请求头覆盖的 JSON"
+    "Fix the Request Header Override JSON first": "请先修正请求头覆盖的 JSON",
+    "Group display order": "分组显示顺序",
+    "Users pick groups in this order. It does not change the auto group routing priority.": "用户在控制台里按这个顺序看分组。它不影响自动分组的选路优先级。"
   }
 }

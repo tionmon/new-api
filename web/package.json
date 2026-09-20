@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "rsbuild dev",
-    "build": "rsbuild build",
-    "build:check": "tsgo -b && rsbuild build",
+    "build": "node scripts/gen-lobe-icon-names.mjs && rsbuild build",
+    "build:check": "node scripts/gen-lobe-icon-names.mjs && tsgo -b && rsbuild build",
     "bundle:check": "node scripts/check-bundle-budget.mjs",
     "typecheck": "tsgo -b",
     "lint": "oxlint -c .oxlintrc.json .",
@@ -17,13 +17,15 @@
     "preview": "rsbuild preview",
     "test": "vitest run",
     "test:browser": "node scripts/check-home-visual.mjs",
+    "test:browser:group-order": "node scripts/check-group-order.mjs",
     "test:watch": "vitest",
     "format:check": "node scripts/format-with-protected-headers.mjs --check",
     "format": "node scripts/format-with-protected-headers.mjs --write",
     "copyright:check": "node scripts/add-copyright.mjs --check",
     "copyright": "node scripts/add-copyright.mjs",
     "i18n:sync": "node scripts/sync-i18n.mjs",
-    "knip": "knip"
+    "knip": "knip",
+    "gen:icon-names": "node scripts/gen-lobe-icon-names.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

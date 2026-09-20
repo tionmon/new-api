@@ -19,7 +19,7 @@ func GetGroups(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
-		"data":    groupNames,
+		"data":    setting.SortGroupsByDisplayOrder(groupNames),
 	})
 }
 
@@ -44,9 +44,16 @@ func GetUserGroups(c *gin.Context) {
 			"desc":  setting.GetUsableGroupDescription("auto"),
 		}
 	}
+	// The display order comes from the admin group pricing page. "auto" is a pseudo
+	// group rather than a configured one, and it always leads the list.
+	groupOrder := setting.GetGroupOrder()
+	if _, ok := usableGroups["auto"]; ok {
+		groupOrder = append([]string{"auto"}, groupOrder...)
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-		"data":    usableGroups,
+		"success":     true,
+		"message":     "",
+		"data":        usableGroups,
+		"group_order": groupOrder,
 	})
 }

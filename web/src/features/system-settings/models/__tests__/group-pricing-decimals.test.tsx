@@ -23,18 +23,24 @@ import { assert, expect, test } from 'vitest'
 
 import { GroupRatioVisualEditor } from '../group-ratio-visual-editor'
 
-function PricingFixture() {
-  const [settings, setSettings] = useState<Record<string, string>>({
+function PricingFixture({
+  initial = {
     GroupRatio: '{"default":1}',
     TopupGroupRatio: '{}',
     UserUsableGroups: '{}',
-  })
+    GroupOrder: '[]',
+  },
+}: {
+  initial?: Record<string, string>
+}) {
+  const [settings, setSettings] = useState<Record<string, string>>(initial)
   return (
     <>
       <GroupRatioVisualEditor
         groupRatio={settings.GroupRatio}
         topupGroupRatio={settings.TopupGroupRatio}
         userUsableGroups={settings.UserUsableGroups}
+        groupOrder={settings.GroupOrder}
         groupGroupRatio='{}'
         autoGroups='[]'
         maxTokenAutoGroupsField={null}
@@ -47,6 +53,59 @@ function PricingFixture() {
     </>
   )
 }
+
+function savedSettings() {
+  return JSON.parse(
+    screen.getByRole('status', { name: 'Saved ratios' }).textContent ?? '{}'
+  )
+}
+
+function dataRow(index: number) {
+  // Row 0 is the header row.
+  return screen.getAllByRole('row')[index + 1]
+}
+
+const twoGroups = {
+  GroupRatio: '{"a":1,"b":1}',
+  TopupGroupRatio: '{}',
+  UserUsableGroups: '{}',
+  GroupOrder: '[]',
+}
+
+test('renders groups in the saved display order', () => {
+  render(<PricingFixture initial={{ ...twoGroups, GroupOrder: '["b","a"]' }} />)
+
+  expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
+  expect(within(dataRow(1)).getByDisplayValue('a')).toBeTruthy()
+})
+
+test('moving a group up reorders the rows and saves the display order', async () => {
+  const user = userEvent.setup()
+  render(<PricingFixture initial={twoGroups} />)
+
+  // Row buttons are ordered: move up, move down, details, delete.
+  await user.click(within(dataRow(1)).getAllByRole('button')[0])
+
+  expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
+  expect(JSON.parse(savedSettings().GroupOrder)).toEqual(['b', 'a'])
+})
+
+test('a group added later follows the ordered groups', () => {
+  render(
+    <PricingFixture
+      initial={{
+        GroupRatio: '{"a":1,"b":2}',
+        TopupGroupRatio: '{}',
+        UserUsableGroups: '{"newcomer":"latest"}',
+        GroupOrder: '["b"]',
+      }}
+    />
+  )
+
+  expect(within(dataRow(0)).getByDisplayValue('b')).toBeTruthy()
+  expect(within(dataRow(1)).getByDisplayValue('a')).toBeTruthy()
+  expect(within(dataRow(2)).getByDisplayValue('newcomer')).toBeTruthy()
+})
 
 test.each([
   ['GroupRatio', 0],
@@ -68,9 +127,7 @@ test.each([
     expect(input).toHaveValue(0.04)
     await user.tab()
     expect(input.checkValidity()).toBe(true)
-    const saved = JSON.parse(
-      screen.getByRole('status', { name: 'Saved ratios' }).textContent ?? '{}'
-    )
+    const saved = savedSettings()
     expect(JSON.parse(saved[key])).toEqual({ default: 0.04 })
     await user.clear(input)
     await user.type(input, '0.0001')

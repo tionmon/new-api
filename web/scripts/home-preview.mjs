@@ -238,11 +238,89 @@ if (process.env.PREVIEW_SUBSCRIPTION === '1') {
   }
 }
 
+/** Admin session for the system-settings preview. Only with PREVIEW_ADMIN=1, so
+ *  the ordinary console preview keeps role 1. */
+if (process.env.PREVIEW_ADMIN === '1') {
+  USER.role = 100
+}
+
+/**
+ * Group-pricing preview (PREVIEW_ADMIN=1): option values are raw JSON strings,
+ * exactly as `GET /api/option/` returns them, so the admin page's own parsing
+ * path runs for real. The group set and its order mirror the live site.
+ */
+const GROUP_RATIO = {
+  福利分组: 0.15,
+  'Gemini Ultra分组': 1,
+  'Pro 20x分组': 0.1,
+  国模分组: 0.5,
+  特价国模分组: 0.25,
+  'Claude Kiro分组': 0.05,
+  'Claude Max分组': 0.8,
+}
+const GROUP_DESCRIPTIONS = {
+  福利分组: '来自神秘渠道的福利分组',
+  'Gemini Ultra分组': 'Gemini官方订阅渠道',
+  'Pro 20x分组': 'ChatGPT官方订阅渠道',
+  国模分组: '国产模型渠道',
+  特价国模分组: '稳定性欠佳渠道',
+  'Claude Kiro分组': '高缓存Kiro渠道',
+}
+
+/** Routes that already carry their own {success, data} envelope and must not be
+ *  wrapped again by ok(). Filled in by the admin preview below. */
+const RAW_ROUTES = {}
+
 // Public configuration is a local snapshot, with remote images and captcha disabled.
 const CANNED_ROUTES = {
   '/api/status': STATUS,
   '/api/setup': { success: true, data: { status: true } },
   '/api/home_page_content': ok(''),
+}
+
+if (process.env.PREVIEW_ADMIN === '1') {
+  const groupNames = Object.keys(GROUP_RATIO)
+  const describe = (name) => GROUP_DESCRIPTIONS[name] ?? name
+  RAW_ROUTES['/api/user/self/groups'] = {
+    success: true,
+    message: '',
+    data: Object.fromEntries(
+      groupNames.map((name) => [
+        name,
+        { ratio: GROUP_RATIO[name], desc: describe(name) },
+      ])
+    ),
+    group_order: groupNames,
+  }
+  CONSOLE_ROUTES['/api/group/'] = groupNames
+  // Public pricing payload: the model square and its group filter read
+  // `usable_group` and `group_order` from here.
+  CANNED_ROUTES['/api/pricing'] = {
+    success: true,
+    data: [],
+    vendors: [],
+    group_ratio: { ...GROUP_RATIO },
+    usable_group: Object.fromEntries(
+      groupNames.map((name) => [name, describe(name)])
+    ),
+    group_order: groupNames,
+    supported_endpoint: {},
+    auto_groups: [],
+  }
+  CONSOLE_ROUTES['/api/option/'] = [
+    { key: 'GroupRatio', value: JSON.stringify(GROUP_RATIO, null, 2) },
+    { key: 'TopupGroupRatio', value: '{}' },
+    {
+      key: 'UserUsableGroups',
+      value: JSON.stringify(GROUP_DESCRIPTIONS, null, 2),
+    },
+    { key: 'GroupOrder', value: '[]' },
+    { key: 'GroupGroupRatio', value: '{}' },
+    { key: 'AutoGroups', value: '[]' },
+    { key: 'MaxTokenAutoGroups', value: '5' },
+    { key: 'DefaultUseAutoGroup', value: 'false' },
+    { key: 'group_ratio_setting.group_special_usable_group', value: '{}' },
+  ]
 }
 
 // 带 preview_auth=1 cookie 时回放假 session，否则 401
@@ -270,6 +348,15 @@ function handleApi(req, res, pathname) {
     else {
       sendJson(res, 401, { success: false, message: 'unauthorized (preview)' })
     }
+    return
+  }
+
+  if (Object.hasOwn(RAW_ROUTES, pathname)) {
+    if (!isAuthed(req)) {
+      sendJson(res, 401, { success: false, message: 'unauthorized (preview)' })
+      return
+    }
+    sendJson(res, 200, RAW_ROUTES[pathname])
     return
   }
 

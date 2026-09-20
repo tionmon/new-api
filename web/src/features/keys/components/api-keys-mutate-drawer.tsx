@@ -66,6 +66,7 @@ import { RelatedPolicyLink } from '@/features/system-settings/request-policies/r
 import { useStatus } from '@/hooks/use-status'
 import { getUserModels, getUserGroups } from '@/lib/api'
 import { getCurrencyDisplay, getCurrencyLabel } from '@/lib/currency'
+import { sortByGroupOrder } from '@/lib/group-order'
 import { handleServerError } from '@/lib/handle-server-error'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
@@ -161,12 +162,16 @@ export function ApiKeysMutateDrawer({
   const models = modelsData?.data || []
   const groups = useMemo<ApiKeyGroupOption[]>(
     () =>
-      Object.entries(groupsData?.data || {}).map(([key, info]) => ({
-        value: key,
-        label: key,
-        desc: info.desc || key,
-        ratio: info.ratio,
-      })),
+      sortByGroupOrder(
+        Object.entries(groupsData?.data || {}).map(([key, info]) => ({
+          value: key,
+          label: key,
+          desc: info.desc || key,
+          ratio: info.ratio,
+        })),
+        (group) => group.value,
+        groupsData?.group_order
+      ),
     [groupsData]
   )
   const backendHasAuto = groups.some((g) => g.value === 'auto')

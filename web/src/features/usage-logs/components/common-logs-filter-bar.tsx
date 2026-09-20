@@ -42,6 +42,7 @@ import {
 import { getGroups } from '@/features/users/api'
 import { useMediaQuery } from '@/hooks'
 import { getUserGroups } from '@/lib/api'
+import { sortGroupNames } from '@/lib/group-order'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { LOG_TYPE_ALL_VALUE, LOG_TYPE_FILTERS } from '../constants'
@@ -139,7 +140,10 @@ export function CommonLogsFilterBar<TData>(
   const groupOptions = useMemo(() => {
     const groups = isAdmin
       ? (adminGroups?.data ?? [])
-      : Object.keys(userGroups?.data ?? {})
+      : sortGroupNames(
+          Object.keys(userGroups?.data ?? {}),
+          userGroups?.group_order
+        )
     return groups
       .filter((group) => group !== 'auto')
       .map((group) => ({ label: group, value: group }))

@@ -984,6 +984,7 @@ type GroupPricingSectionProps = {
   model: PricingModel
   groupRatio: Record<string, number>
   usableGroup: Record<string, { desc: string; ratio: number }>
+  groupOrder?: string[]
   autoGroups: string[]
   priceRate: number
   usdExchangeRate: number
@@ -1052,8 +1053,8 @@ function ProviderGroupPricingSection(
   const showRechargePrice = props.showRechargePrice ?? false
 
   const availableGroups = useMemo(
-    () => getAvailableGroups(props.model, props.usableGroup || {}),
-    [props.model, props.usableGroup]
+    () => getAvailableGroups(props.model, props.usableGroup || {}, props.groupOrder),
+    [props.model, props.usableGroup, props.groupOrder]
   )
 
   const isTokenBased = isTokenBasedModel(props.model)
@@ -1451,6 +1452,7 @@ export interface ModelDetailsContentProps {
   model: PricingModel
   groupRatio: Record<string, number>
   usableGroup: Record<string, { desc: string; ratio: number }>
+  groupOrder?: string[]
   endpointMap: Record<string, { path?: string; method?: string }>
   autoGroups: string[]
   priceRate: number
@@ -1527,6 +1529,7 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
               model={props.model}
               groupRatio={props.groupRatio}
               usableGroup={props.usableGroup}
+              groupOrder={props.groupOrder}
               autoGroups={props.autoGroups}
               priceRate={props.priceRate}
               usdExchangeRate={props.usdExchangeRate}
@@ -1596,6 +1599,7 @@ export function ModelDetails() {
     models,
     groupRatio,
     usableGroup,
+    groupOrder,
     endpointMap,
     autoGroups,
     isLoading,
@@ -1675,6 +1679,7 @@ export function ModelDetails() {
           model={model}
           groupRatio={groupRatio || {}}
           usableGroup={usableGroup || {}}
+          groupOrder={groupOrder}
           autoGroups={autoGroups || []}
           priceRate={priceRate ?? 1}
           usdExchangeRate={usdExchangeRate ?? 1}
