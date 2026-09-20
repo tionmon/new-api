@@ -22,7 +22,15 @@ import { createInstance } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
 import { expect, test, vi } from 'vitest'
 
-import fr from '@/i18n/locales/fr.json'
+// 本站只发布 en/zh。这个用例要验的是「长翻译标签在行内换行、不遮住模型搜索框」，
+// 与具体语言无关，所以把长文案内联成测试资源，而不是为一条布局断言保留一份不发布的语言包。
+const longLabelLocale = {
+  translation: {
+    'Select models': 'Sélectionner les modèles à associer à ce canal',
+    'Search models': 'Rechercher des modèles à faire correspondre',
+    'Search models...': 'Rechercher des modèles à faire correspondre...',
+  },
+}
 
 import { ModelMappingBatchDialog } from '../model-mapping-batch-dialog'
 
@@ -246,7 +254,11 @@ test('cancelling after configuring a rule does not apply mappings', async () => 
 
 test('long translated source labels wrap inside their row without covering the model search', async () => {
   const i18n = createInstance()
-  await i18n.init({ lng: 'fr', resources: { fr }, keySeparator: false })
+  await i18n.init({
+    lng: 'fr',
+    resources: { fr: longLabelLocale },
+    keySeparator: false,
+  })
   render(
     <I18nextProvider i18n={i18n}>
       <ModelMappingBatchDialog
@@ -258,12 +270,16 @@ test('long translated source labels wrap inside their row without covering the m
       />
     </I18nextProvider>
   )
-  const tabs = screen.getByRole('tablist', { name: 'Sélectionner les modèles' })
+  const tabs = screen.getByRole('tablist', {
+    name: 'Sélectionner les modèles à associer à ce canal',
+  })
   expect(tabs).toHaveClass('grid-cols-2', 'group-data-horizontal/tabs:h-auto')
   for (const tab of within(tabs).getAllByRole('tab')) {
     expect(tab).toHaveClass('whitespace-normal', 'h-auto')
   }
   expect(
-    screen.getByRole('textbox', { name: 'Rechercher des modèles...' })
+    screen.getByRole('textbox', {
+      name: 'Rechercher des modèles à faire correspondre...',
+    })
   ).toBeVisible()
 })

@@ -48,7 +48,7 @@ export async function importIconVariant(
 ): Promise<IconComponent | null> {
   try {
     const mod = await import(
-      /* webpackInclude: /[A-Za-z0-9]+\/components\/(Mono|Color|Text|Avatar|Combine)\.js$/ */
+      /* webpackInclude: /\/components\/(Mono|Avatar|Brand|BrandColor|Color|Combine|Text|TextCn|TextColor|Simple|Morden)\.js$/ */
       `@lobehub/icons/es/${baseKey}/components/${variant}.js`
     )
     // 组件可能在 default 上，也可能就是模块命名空间本身

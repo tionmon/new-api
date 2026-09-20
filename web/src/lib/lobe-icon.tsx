@@ -64,6 +64,17 @@ const ICON_VARIANTS = {
   TextCn: 'hasTextCn',
   TextColor: 'hasTextColor',
 } as const
+/**
+ * 变体导入器是独立的异步模块（见 `lobe-icon-variant.ts`）：它带着一张上千键的
+ * 「图标名 → chunk」映射表，只有真要画图标时才用得上。放在本文件里会把那张表推进
+ * 首屏入口 chunk，实测顶破单文件体积预算——所以这里只加载一次，之后复用。
+ */
+let variantImporter: Promise<typeof import('./lobe-icon-variant')> | null = null
+function loadVariantImporter(): Promise<typeof import('./lobe-icon-variant')> {
+  variantImporter ??= import('./lobe-icon-variant')
+  return variantImporter
+}
+
 const LAZY_ICONS = new Map<
   string,
   LazyExoticComponent<ComponentType<Record<string, unknown>>>
@@ -161,20 +172,23 @@ export function getLobeIcon(
   let IconComponent = LAZY_ICONS.get(cacheKey)
   if (!IconComponent) {
     // Load the selected SVG variant, avoiding the brand index's Avatar/UI dependencies.
-    IconComponent = lazy(() =>
-      import(
-        /* webpackInclude: /\/components\/(Mono|Avatar|Brand|BrandColor|Color|Combine|Text|TextCn|TextColor|Simple|Morden)\.js$/ */
-        `@lobehub/icons/es/${baseKey}/components/${variant}.js`
-      ).catch(() => ({
-        default: (props: Record<string, unknown>) =>
-          renderLobeIconFallback(
-            baseKey,
-            typeof props.size === 'number' || typeof props.size === 'string'
-              ? props.size
-              : 20
-          ),
-      }))
-    )
+    IconComponent = lazy(async () => {
+      const fallback = (props: Record<string, unknown>) =>
+        renderLobeIconFallback(
+          baseKey,
+          typeof props.size === 'number' || typeof props.size === 'string'
+            ? props.size
+            : 20
+        )
+      try {
+        const { importIconVariant } = await loadVariantImporter()
+        return {
+          default: (await importIconVariant(baseKey, variant)) ?? fallback,
+        }
+      } catch {
+        return { default: fallback }
+      }
+    })
     LAZY_ICONS.set(cacheKey, IconComponent)
   }
 

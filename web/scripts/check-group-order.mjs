@@ -457,7 +457,7 @@ try {
     afterMove.join(' → ')
   )
 
-  await click(byButtonText(zhButtonPattern('Save group ratios')))
+  await click(byButtonText(zhButtonPattern('Save group settings')))
   const orderWrite = await until(
     () => optionWrites.find((write) => write.key === 'GroupOrder'),
     'GroupOrder write',

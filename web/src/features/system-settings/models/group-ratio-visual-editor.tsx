@@ -18,6 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   Search,
   X,
@@ -32,6 +34,7 @@ import {
   useEffect,
   useCallback,
   memo,
+  type Key,
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -81,6 +84,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber } from '@/lib/format'
+import { sortGroupNames } from '@/lib/group-order'
 
 import { safeJsonParse } from '../utils/json-parser'
 import { GroupSpecialUsableRulesEditor } from './group-special-usable-editor'
@@ -98,6 +102,8 @@ type GroupRatioVisualEditorProps = {
   groupRatio: string
   topupGroupRatio: string
   userUsableGroups: string
+  /** 用户侧看到的顺序；后台表格的行序即它的初始值。 */
+  groupOrder: string
   groupGroupRatio: string
   autoGroups: string
   maxTokenAutoGroupsField: ReactNode
@@ -147,6 +153,10 @@ function parseUsableMap(value: string): Record<string, string> {
   })
 }
 
+function parseGroupOrder(value: string): string[] {
+  return safeJsonParse<string[]>(value, { fallback: [], silent: true })
+}
+
 function parseNestedRatioMap(
   value: string
 ): Record<string, Record<string, number>> {
@@ -159,7 +169,8 @@ function parseNestedRatioMap(
 function buildGroupPricingRows(
   groupRatio: string,
   userUsableGroups: string,
-  topupGroupRatio: string
+  topupGroupRatio: string,
+  groupOrder: string
 ): GroupPricingRow[] {
   const ratioMap = parseRatioMap(groupRatio)
   const usableMap = parseUsableMap(userUsableGroups)
@@ -170,24 +181,28 @@ function buildGroupPricingRows(
     ...Object.keys(topupMap),
   ])
 
-  return [...names].map((name) => ({
-    _id: createGroupPricingId(),
-    name,
-    ratio: String(normalizeRatio(ratioMap[name])),
-    topupRatio: Object.hasOwn(topupMap, name) ? String(topupMap[name]) : '',
-    selectable: Object.hasOwn(usableMap, name),
-    description: String(usableMap[name] ?? ''),
-  }))
+  return sortGroupNames([...names], parseGroupOrder(groupOrder)).map(
+    (name) => ({
+      _id: createGroupPricingId(),
+      name,
+      ratio: String(normalizeRatio(ratioMap[name])),
+      topupRatio: Object.hasOwn(topupMap, name) ? String(topupMap[name]) : '',
+      selectable: Object.hasOwn(usableMap, name),
+      description: String(usableMap[name] ?? ''),
+    })
+  )
 }
 
 function serializeGroupPricingRows(rows: GroupPricingRow[]) {
   const groupRatio: Record<string, number> = {}
   const userUsableGroups: Record<string, string> = {}
   const topupGroupRatio: Record<string, number> = {}
+  const groupOrder: string[] = []
 
   for (const row of rows) {
     const name = row.name.trim()
     if (!name) continue
+    groupOrder.push(name)
     groupRatio[name] = normalizeRatio(row.ratio)
     if (row.selectable) {
       userUsableGroups[name] = row.description
@@ -202,6 +217,7 @@ function serializeGroupPricingRows(rows: GroupPricingRow[]) {
     GroupRatio: JSON.stringify(groupRatio, null, 2),
     UserUsableGroups: JSON.stringify(userUsableGroups, null, 2),
     TopupGroupRatio: JSON.stringify(topupGroupRatio, null, 2),
+    GroupOrder: JSON.stringify(groupOrder, null, 2),
   }
 }
 
@@ -211,18 +227,21 @@ function groupPricingSignature(rows: GroupPricingRow[]): string {
     groupRatio: parseRatioMap(serialized.GroupRatio),
     userUsableGroups: parseUsableMap(serialized.UserUsableGroups),
     topupGroupRatio: parseRatioMap(serialized.TopupGroupRatio),
+    groupOrder: parseGroupOrder(serialized.GroupOrder),
   })
 }
 
 function sourceGroupPricingSignature(
   groupRatio: string,
   userUsableGroups: string,
-  topupGroupRatio: string
+  topupGroupRatio: string,
+  groupOrder: string
 ): string {
   return JSON.stringify({
     groupRatio: parseRatioMap(groupRatio),
     userUsableGroups: parseUsableMap(userUsableGroups),
     topupGroupRatio: parseRatioMap(topupGroupRatio),
+    groupOrder: parseGroupOrder(groupOrder),
   })
 }
 
@@ -273,6 +292,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
   groupRatio,
   topupGroupRatio,
   userUsableGroups,
+  groupOrder,
   groupGroupRatio,
   autoGroups,
   maxTokenAutoGroupsField,
@@ -370,6 +390,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
           groupRatio={groupRatio}
           userUsableGroups={userUsableGroups}
           topupGroupRatio={topupGroupRatio}
+          groupOrder={groupOrder}
           onChange={onChange}
           onShowDetail={setDetailGroup}
         />
@@ -475,6 +496,7 @@ type GroupPricingTableProps = {
   groupRatio: string
   userUsableGroups: string
   topupGroupRatio: string
+  groupOrder: string
   onChange: (field: string, value: string) => void
   onShowDetail: (name: string) => void
 }
@@ -483,20 +505,27 @@ function GroupPricingTable({
   groupRatio,
   userUsableGroups,
   topupGroupRatio,
+  groupOrder,
   onChange,
   onShowDetail,
 }: GroupPricingTableProps) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [rows, setRows] = useState<GroupPricingRow[]>(() =>
-    buildGroupPricingRows(groupRatio, userUsableGroups, topupGroupRatio)
+    buildGroupPricingRows(
+      groupRatio,
+      userUsableGroups,
+      topupGroupRatio,
+      groupOrder
+    )
   )
 
   useEffect(() => {
     const incomingSignature = sourceGroupPricingSignature(
       groupRatio,
       userUsableGroups,
-      topupGroupRatio
+      topupGroupRatio,
+      groupOrder
     )
     setRows((currentRows) => {
       if (groupPricingSignature(currentRows) === incomingSignature) {
@@ -505,10 +534,11 @@ function GroupPricingTable({
       return buildGroupPricingRows(
         groupRatio,
         userUsableGroups,
-        topupGroupRatio
+        topupGroupRatio,
+        groupOrder
       )
     })
-  }, [groupRatio, userUsableGroups, topupGroupRatio])
+  }, [groupRatio, userUsableGroups, topupGroupRatio, groupOrder])
 
   const emitRows = useCallback(
     (nextRows: GroupPricingRow[]) => {
@@ -517,8 +547,25 @@ function GroupPricingTable({
       onChange('GroupRatio', serialized.GroupRatio)
       onChange('UserUsableGroups', serialized.UserUsableGroups)
       onChange('TopupGroupRatio', serialized.TopupGroupRatio)
+      onChange('GroupOrder', serialized.GroupOrder)
     },
     [onChange]
+  )
+
+  // 按 id 而不是按下标移动：表格被搜索过滤时，行内的 index 是「可见序」下标，
+  // 拿它当 rows 下标会移错行。
+  const moveRow = useCallback(
+    (id: string, delta: number) => {
+      const from = rows.findIndex((row) => row._id === id)
+      const to = from + delta
+      if (from < 0 || to < 0 || to >= rows.length) return
+      const nextRows = [...rows]
+      const [moved] = nextRows.splice(from, 1)
+      if (!moved) return
+      nextRows.splice(to, 0, moved)
+      emitRows(nextRows)
+    },
+    [emitRows, rows]
   )
 
   const updateRow = useCallback(
@@ -583,6 +630,28 @@ function GroupPricingTable({
       row.description.toLowerCase().includes(query)
   )
 
+  // motion 的 Reorder 交回的是「它看到的那些行」的新顺序。没搜索时就是整表顺序；
+  // 搜索时只把被筛出来的位置按新顺序回填，未显示的行留在原处。
+  const reorderRows = useCallback(
+    (orderedIds: Key[]) => {
+      const byId = new Map(rows.map((row) => [row._id, row]))
+      const ordered = orderedIds
+        .map((id) => byId.get(String(id)))
+        .filter((row): row is GroupPricingRow => row !== undefined)
+      if (ordered.length !== orderedIds.length) return
+      if (!query) {
+        emitRows(ordered)
+        return
+      }
+      const visibleIds = new Set(visibleRows.map((row) => row._id))
+      let next = 0
+      emitRows(
+        rows.map((row) => (visibleIds.has(row._id) ? ordered[next++] : row))
+      )
+    },
+    [emitRows, query, rows, visibleRows]
+  )
+
   return (
     <Card className={sectionCardClassName}>
       <CardHeader className={sectionHeaderClassName}>
@@ -626,7 +695,14 @@ function GroupPricingTable({
             )}
           </InputGroup>
           <StaticDataTable
-            tableClassName='min-w-[760px]'
+            tableClassName='min-w-[860px]'
+            // 浏览器检查靠这个 id 定位这张表（官方的重构里没有它）。
+            containerProps={{ id: 'group-pricing-order-affordance' }}
+            reorder={{
+              values: visibleRows.map((row) => row._id),
+              onReorder: reorderRows,
+              handleLabel: t('Drag to move'),
+            }}
             tableProps={{ 'aria-label': t('Pricing groups') }}
             data={visibleRows}
             getRowKey={(row) => row._id}
@@ -653,6 +729,44 @@ function GroupPricingTable({
               />
             }
             columns={[
+              {
+                id: 'order',
+                header: t('Sort Order'),
+                className: 'w-28',
+                // 把手由表格渲染：motion 的拖拽控制必须待在被移动的那一行内部。
+                dragHandle: true,
+                cell: (row) => {
+                  const rowIndex = rows.findIndex(
+                    (item) => item._id === row._id
+                  )
+                  return (
+                    <div className='flex items-center gap-0.5'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        disabled={rowIndex <= 0}
+                        onClick={() => moveRow(row._id, -1)}
+                        aria-label={t('Move {{group}} up', {
+                          group: row.name.trim() || t('Group name'),
+                        })}
+                      >
+                        <ArrowUp className='h-4 w-4' />
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        disabled={rowIndex < 0 || rowIndex >= rows.length - 1}
+                        onClick={() => moveRow(row._id, 1)}
+                        aria-label={t('Move {{group}} down', {
+                          group: row.name.trim() || t('Group name'),
+                        })}
+                      >
+                        <ArrowDown className='h-4 w-4' />
+                      </Button>
+                    </div>
+                  )
+                },
+              },
               {
                 id: 'group',
                 header: t('Group name'),
@@ -768,6 +882,12 @@ function GroupPricingTable({
               },
             ]}
           />
+
+          <p className='text-muted-foreground text-sm'>
+            {t(
+              'Users pick groups in this order. It does not change the auto group routing priority.'
+            )}
+          </p>
 
           {duplicateNames.length > 0 && (
             <p className='text-destructive text-sm'>
