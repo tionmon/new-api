@@ -308,20 +308,28 @@ try {
   }
 
   /**
-   * Drags a row's sort handle onto another row. Synthetic DragEvent dispatch does
-   * not move rows in Chrome (the drop never reaches the handler), so the drag is
-   * driven through the input pipeline instead.
+   * Drags a row's sort handle onto another row using plain pointer events.
+   *
+   * Rows are reordered by motion's Reorder, which listens to pointerdown/move/up —
+   * not to the browser's native drag-and-drop — so there is no drag interception
+   * here. Driving the same events a finger or mouse produces also means this test
+   * fails if the row stops following the pointer.
+   *
+   * Returns the vertical offsets sampled mid-drag, per row, so the caller can assert
+   * that the dragged row actually moved with the cursor.
    */
+  async function rowOffsetsFromRest() {
+    return evaluate(`(() => {
+      const rows = Array.from(document.querySelectorAll('#group-pricing-order-affordance tbody tr'));
+      return rows.map(row => {
+        const transform = getComputedStyle(row).transform;
+        if (!transform || transform === 'none') return 0;
+        return Math.round(new DOMMatrixReadOnly(transform).m42);
+      });
+    })()`)
+  }
+
   async function dragRowHandle(from, to) {
-    let dragData = null
-    const onMessage = (event) => {
-      const message = JSON.parse(event.data)
-      if (message.method === 'Input.dragIntercepted') {
-        dragData = message.params.data
-      }
-    }
-    ws.addEventListener('message', onMessage)
-    await send('Input.setInterceptDrags', { enabled: true })
     await send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       x: from.x,
@@ -330,12 +338,14 @@ try {
       clickCount: 1,
       buttons: 1,
     })
-    for (const [x, y] of [
-      [from.x + 6, from.y + 6],
-      [from.x, from.y + 20],
-      [to.x, to.y - 20],
+    const path = [
+      [from.x, from.y + 8],
+      [from.x, from.y + 24],
+      [Math.round((from.x + to.x) / 2), Math.round((from.y + to.y) / 2)],
       [to.x, to.y],
-    ]) {
+    ]
+    const samples = []
+    for (const [x, y] of path) {
       await send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
         x,
@@ -343,12 +353,10 @@ try {
         button: 'left',
         buttons: 1,
       })
-      await pause(80)
+      await pause(120)
+      samples.push(await rowOffsetsFromRest())
     }
-    const data = await until(() => dragData, 'intercepted drag data', 5000)
-    for (const type of ['dragEnter', 'dragOver', 'drop']) {
-      await send('Input.dispatchDragEvent', { type, x: to.x, y: to.y, data })
-    }
+    const offsets = samples.at(-1) ?? []
     await send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       x: to.x,
@@ -357,9 +365,8 @@ try {
       clickCount: 1,
       buttons: 0,
     })
-    await send('Input.setInterceptDrags', { enabled: false })
-    ws.removeEventListener('message', onMessage)
-    await pause(300)
+    await pause(450)
+    return { offsets, samples }
   }
 
   await send('Page.enable')
@@ -492,12 +499,18 @@ try {
     const centre = el => { const r = el.getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.top + r.height/2)} };
     return {
       handle: centre(rows[0].querySelector('svg.lucide-grip-vertical').parentElement),
-      to: centre(rows[2]),
+      to: (() => { const r = rows[2].getBoundingClientRect(); return {x: Math.round(r.left + r.width/2), y: Math.round(r.bottom + 6)}; })(),
     };
   })()`)
   const beforeDrag = await readTableGroupNames()
-  await dragRowHandle(dragFrom.handle, dragFrom.to)
+  const { offsets: midDragOffsets, samples: midDragSamples } =
+    await dragRowHandle(dragFrom.handle, dragFrom.to)
   const afterDrag = await readTableGroupNames()
+  check(
+    midDragOffsets.some((offset) => Math.abs(offset) > 8),
+    'the dragged row is translated away from its resting position mid-drag',
+    `offsets=${JSON.stringify(midDragOffsets)} samples=${JSON.stringify(midDragSamples)}`
+  )
   check(
     JSON.stringify(afterDrag) ===
       JSON.stringify([

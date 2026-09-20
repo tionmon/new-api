@@ -32,7 +32,7 @@ import {
   useEffect,
   useCallback,
   memo,
-  type DragEvent,
+  type Key,
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -456,8 +456,6 @@ function GroupPricingTable({
       groupOrder
     )
   )
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-  const [dropIndex, setDropIndex] = useState<number | null>(null)
 
   useEffect(() => {
     const incomingSignature = sourceGroupPricingSignature(
@@ -502,31 +500,20 @@ function GroupPricingTable({
     [emitRows, rows]
   )
 
-  // Index of the row the pointer is over, or null when it is outside the table body
-  // or over the dragged row itself — a row dropped onto itself stays put.
-  const dragTargetIndex = (event: DragEvent<HTMLElement>) => {
-    const row = (event.target as HTMLElement | null)?.closest('tr')
-    const body = row?.parentElement
-    if (!row || !body) return null
-    const index = [...body.children].indexOf(row)
-    if (index < 0 || index >= rows.length || index === draggedIndex) return null
-    return index
-  }
-
-  const stopDragging = () => {
-    setDraggedIndex(null)
-    setDropIndex(null)
-  }
-
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (draggedIndex === null) return
-    event.preventDefault()
-    const index = dragTargetIndex(event)
-    if (index !== null) {
-      moveRow(draggedIndex, index)
-    }
-    stopDragging()
-  }
+  // Motion's Reorder hands back the row keys in their new order once the row is
+  // dropped; the same `emitRows` the up/down buttons use then writes it out.
+  const reorderRows = useCallback(
+    (orderedIds: Key[]) => {
+      const byId = new Map(rows.map((row) => [row._id, row]))
+      const nextRows = orderedIds
+        .map((id) => byId.get(String(id)))
+        .filter((row): row is GroupPricingRow => row !== undefined)
+      if (nextRows.length === rows.length) {
+        emitRows(nextRows)
+      }
+    },
+    [emitRows, rows]
+  )
 
   const updateRow = useCallback(
     (
@@ -604,44 +591,26 @@ function GroupPricingTable({
           <StaticDataTable
             data={rows}
             getRowKey={(row) => row._id}
-            getRowClassName={(_, index) => {
-              if (index === dropIndex) return 'bg-muted/60'
-              if (index === draggedIndex) return 'opacity-50'
-              return undefined
+            reorder={{
+              values: rows.map((row) => row._id),
+              onReorder: reorderRows,
+              handleLabel: t('Drag to move'),
             }}
             emptyClassName='text-muted-foreground h-20 text-sm'
             emptyContent={t('No groups yet. Add a group to get started.')}
             containerProps={{
               id: 'group-pricing-order-affordance',
-              onDragOver: (event) => {
-                if (draggedIndex === null) return
-                event.preventDefault()
-                event.dataTransfer.dropEffect = 'move'
-                setDropIndex(dragTargetIndex(event))
-              },
-              onDrop: handleDrop,
-              onDragEnd: stopDragging,
             }}
             columns={[
               {
                 id: 'order',
                 header: t('Sort Order'),
                 className: 'w-28',
+                // The grip is rendered by the table: it has to own the motion drag
+                // controls, which live inside the row they move.
+                dragHandle: true,
                 cell: (row, index) => (
                   <div className='flex items-center gap-0.5'>
-                    <span
-                      draggable
-                      aria-hidden='true'
-                      title={t('Drag to move')}
-                      className='text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing'
-                      onDragStart={(event) => {
-                        setDraggedIndex(index)
-                        event.dataTransfer.effectAllowed = 'move'
-                        event.dataTransfer.setData('text/plain', String(index))
-                      }}
-                    >
-                      <GripVertical className='h-4 w-4' />
-                    </span>
                     <Button
                       variant='ghost'
                       size='sm'
