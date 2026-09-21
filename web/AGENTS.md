@@ -107,6 +107,7 @@
 | 复制按钮与剪贴板交互             | `@/components/copy-button`、`@/hooks/use-copy-to-clipboard`                          |
 | 空状态、加载状态、错误状态       | `@/components/empty-state`、`@/components/loading-state`、`@/components/error-state` |
 | 表格、分页、工具栏及列表布局     | `@/components/data-table`，先读该目录的 `README.md` 和公开导出                       |
+| 可拖拽排序的列表项               | `@/components/auto-group-order-item`（motion `Reorder`，真实把手 + 方向键），禁止再手写拖拽 |
 | 按钮、输入、选择、提示等基础控件 | `@/components/ui/`，以 `components.json` 和本地实现为准                              |
 
 - 使用函数式组件与 Hooks，单一职责；组件 props 须有明确类型（接口或类型别名）。
