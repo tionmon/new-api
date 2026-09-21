@@ -225,7 +225,7 @@ export function PublicHeader(props: PublicHeaderProps) {
 
         const scrollToTarget = () => {
           if (!hashId) return
-          const element = document.getElementById(hashId)
+          const element = document.querySelector(`#${hashId}`)
           if (element) {
             element.scrollIntoView({ behavior: 'smooth' })
           }

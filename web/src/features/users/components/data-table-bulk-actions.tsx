@@ -16,11 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type Table } from '@tanstack/react-table'
+import type { Table } from '@tanstack/react-table'
 
 import { DataTableBulkActions as BulkActionsToolbar } from '@/components/data-table'
 
-import { type User } from '../types'
+import type { User } from '../types'
 
 interface DataTableBulkActionsProps {
   table: Table<User>
@@ -29,6 +29,7 @@ interface DataTableBulkActionsProps {
 export function DataTableBulkActions({ table }: DataTableBulkActionsProps) {
   return (
     <BulkActionsToolbar table={table} entityName='user'>
+      {/* eslint-disable-next-line react/jsx-no-useless-fragment -- 组件要求 children；空片段即为「无批量动作」的语义 */}
       <></>
     </BulkActionsToolbar>
   )

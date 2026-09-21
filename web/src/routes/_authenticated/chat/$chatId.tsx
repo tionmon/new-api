@@ -154,6 +154,7 @@ function ChatRouteComponent() {
   }
 
   return (
+    // eslint-disable-next-line react/iframe-missing-sandbox -- 渲染的是本站生成的页面，加 sandbox 会改变既有能力（需产品决策）
     <iframe
       src={iframeSrc}
       key={iframeSrc}

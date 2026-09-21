@@ -65,7 +65,7 @@ type RiskAcknowledgementDialogProps = {
 }
 
 function getRequiredTextRows(text: string) {
-  return Math.max(1, Math.ceil(Array.from(text).length / 42))
+  return Math.max(1, Math.ceil([...text].length / 42))
 }
 
 export function RiskAcknowledgementDialog({
@@ -247,6 +247,7 @@ export function RiskAcknowledgementDialog({
                   {normalizedRequiredTextParts.map((part, index) =>
                     part.type === 'static' ? (
                       <span
+                        // eslint-disable-next-line react/no-array-index-key -- 合规声明文本的静态分片，分片序号即身份
                         key={`static-${index}`}
                         className='text-muted-foreground bg-background/70 border-border w-fit rounded-md border px-2 py-1.5 font-mono text-sm select-none'
                       >
@@ -254,6 +255,7 @@ export function RiskAcknowledgementDialog({
                       </span>
                     ) : (
                       <Textarea
+                        // eslint-disable-next-line react/no-array-index-key -- 与静态分片同级，序号即身份
                         key={`input-${index}`}
                         value={typedTextParts[part.inputIndex ?? 0] ?? ''}
                         onChange={(event) =>
