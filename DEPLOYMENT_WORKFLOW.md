@@ -11,7 +11,7 @@
 - 语言包按 key 三方合并，两种在用语言完整纳入官方新增文案；其余五种已停用的前端语言维持删除。
 - 验证：`bun install --frozen-lockfile`、`bun run typecheck`、`bun run build`、`bun run test`（1960/1960）、`bun run test:browser`（首页与钱包 55 项）通过；根模块与 `relaykit` 的 `GOWORK=off go vet ./...` / `go build ./...`、`make test` 通过；另完成 Linux/amd64 构建。
 - 数据库：真实 SQLite 3.50.4、MySQL 9.7.1、PostgreSQL 15.19 的请求策略、系统任务、迁移/唯一性和任务结算测试通过。临时数据库分别演练新建、由原 fork 升级，以及重复迁移；MySQL/PostgreSQL 同时覆盖独立日志库，保留合成用户的余额、分组、旧 OAuth 绑定、配置与消费日志。没有使用生产数据，未验证最低兼容版本或 ClickHouse。
-- 全仓 lint 不是全绿：同一工具检查官方最新源码 188 errors，集成版 186 errors；逐项无新增 error。TokenMetro 自定义源码 0 errors / 3 warnings（管理员 HTML 和 ID 查询提示）。
+- ~~全仓 lint 不是全绿~~ → **2026-09-21 晚已全绿**（提交 `724ae3019`：全仓 `oxlint` 180 → 0 error，`copyright:check` 的 10 个既有失败同时补齐；`format:check` / `copyright:check` / `oxlint` 三道门现在都可当门用）。⚠️ 跑 `lint:fix` 后必须接 `tsgo -b`——它的自动修复有类型不安全的（`.at(-1)` 返回可空、`Array.from` 被换成展开等），详见 `Plans/TokenMetro-线上前端源码与发布流程.md` 第十三节。
 - 本记录只证明源码集成及本地验收。推送 GitHub 不等于生产容器已更新；服务器发布需单独执行备份、构建和切换。
 
 ## 1. 核心项目与环境元数据 (Environment Metadata)
