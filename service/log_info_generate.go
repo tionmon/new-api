@@ -159,8 +159,17 @@ func appendStreamStatus(relayInfo *relaycommon.RelayInfo, other *model.LogOther)
 	}
 	ss := relayInfo.StreamStatus
 	status := "ok"
-	if !ss.IsNormalEnd() || ss.HasErrors() || ss.ResponseFailed() {
+	switch {
+	case ss.ResponseFailed() || ss.HasErrors():
 		status = "error"
+	case !ss.IsNormalEnd():
+		// The client may disconnect right after the protocol's own terminal event
+		// (e.g. /v1/responses "response.completed"). It already received the whole
+		// response, so that is not a stream failure.
+		if ss.EndReason != relaycommon.StreamEndReasonClientGone ||
+			ss.ResponseOutcome() != string(relaycommon.ResponseOutcomeCompleted) {
+			status = "error"
+		}
 	}
 	streamInfo := map[string]any{
 		"status":     status,
