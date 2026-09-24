@@ -127,11 +127,13 @@ export function ThemeCustomizationProvider(props: {
 
   // Mirror state to the <body> via data-* attributes so theme-presets.css can
   // override CSS variables at the right cascade layer.
+  //
+  // Preset is written unconditionally — including when it equals the shipped
+  // default. A named preset only exists as a CSS block
+  // (`[data-theme-preset='anthropic']`), so clearing the attribute on the
+  // default value would silently drop the palette.
   useEffect(() => {
-    applyAttribute(
-      'data-theme-preset',
-      preset === DEFAULT_THEME_CUSTOMIZATION.preset ? null : preset
-    )
+    applyAttribute('data-theme-preset', preset)
   }, [preset])
 
   // Font is the one axis where we resolve before writing the attribute:
@@ -144,11 +146,12 @@ export function ThemeCustomizationProvider(props: {
     applyAttribute('data-theme-font', resolveThemeFont(font, preset))
   }, [font, preset])
 
+  // `radius: 'default'` ("Auto") defers to the active preset's own `--radius`
+  // hint, so its attribute is cleared. Any concrete value — including the
+  // shipped `md` — must be written, because preset blocks also declare
+  // `--radius` and would otherwise win the cascade.
   useEffect(() => {
-    applyAttribute(
-      'data-theme-radius',
-      radius === DEFAULT_THEME_CUSTOMIZATION.radius ? null : radius
-    )
+    applyAttribute('data-theme-radius', radius === 'default' ? null : radius)
   }, [radius])
 
   useEffect(() => {

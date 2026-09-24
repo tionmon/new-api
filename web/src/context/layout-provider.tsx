@@ -29,7 +29,10 @@ const LAYOUT_VARIANT_COOKIE_NAME = 'layout_variant'
 const LAYOUT_COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 
 // Default values
-const DEFAULT_VARIANT = 'inset'
+// `floating` matches the site's editorial default: the sidebar renders as a
+// detached card with breathing room around it, which is what `inset` (flush to
+// the viewport edge) and `sidebar` (flush panel) intentionally do not do.
+const DEFAULT_VARIANT = 'floating'
 const DEFAULT_COLLAPSIBLE = 'icon'
 
 type LayoutContextType = {

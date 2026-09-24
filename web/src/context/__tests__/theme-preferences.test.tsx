@@ -27,13 +27,15 @@ import {
 import { ThemeProvider, useTheme } from '@/context/theme-provider'
 import { initializeFrontendCache } from '@/lib/frontend-cache'
 
+// Every axis here must differ from `DEFAULT_THEME_CUSTOMIZATION`, otherwise
+// the providers treat it as "no preference" and clear the stored key.
 const savedPreferences = {
   'newapi:theme:v1:mode': 'dark',
   'newapi:theme:v1:preset': 'rose-garden',
   'newapi:theme:v1:font': 'serif',
   'newapi:theme:v1:radius': 'lg',
   'newapi:theme:v1:scale': 'sm',
-  'newapi:theme:v1:content-layout': 'centered',
+  'newapi:theme:v1:content-layout': 'full',
 }
 
 function ThemeControls() {
@@ -51,7 +53,7 @@ function ThemeControls() {
           customization.setFont('serif')
           customization.setRadius('lg')
           customization.setScale('sm')
-          customization.setContentLayout('centered')
+          customization.setContentLayout('full')
         }}
       >
         Customize
@@ -98,7 +100,7 @@ afterEach(() => {
 })
 
 describe('theme preference persistence', () => {
-  it('starts with defaults when only shared legacy theme cookies exist', () => {
+  it('starts with the shipped Anthropic default when only shared legacy theme cookies exist', () => {
     document.cookie = 'theme_preset=ocean-breeze; path=/'
     document.cookie = 'vite-ui-theme=dark; path=/'
     document.cookie = 'theme_font=serif; path=/'
@@ -110,11 +112,22 @@ describe('theme preference persistence', () => {
 
     expect(screen.getByLabelText('Theme mode')).toHaveTextContent('system')
     expect(document.documentElement).toHaveClass('light')
-    expect(document.body).not.toHaveAttribute('data-theme-preset')
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
     expect(document.body).toHaveAttribute('data-theme-font', 'sans')
-    expect(document.body).not.toHaveAttribute('data-theme-radius')
+    expect(document.body).toHaveAttribute('data-theme-radius', 'md')
     expect(document.body).not.toHaveAttribute('data-theme-scale')
-    expect(document.body).toHaveAttribute('data-theme-content-layout', 'full')
+    expect(document.body).toHaveAttribute(
+      'data-theme-content-layout',
+      'centered'
+    )
+  })
+
+  it('keeps the shipped Anthropic preset when its stored preference is absent', () => {
+    render(<ThemeFixture />)
+
+    // A named preset only exists as a CSS block, so the attribute must be
+    // present even when the value equals the shipped default.
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
   })
 
   it('restores all customized preferences after remounting without writing cookies', async () => {
@@ -131,10 +144,7 @@ describe('theme preference persistence', () => {
     expect(document.body).toHaveAttribute('data-theme-font', 'serif')
     expect(document.body).toHaveAttribute('data-theme-radius', 'lg')
     expect(document.body).toHaveAttribute('data-theme-scale', 'sm')
-    expect(document.body).toHaveAttribute(
-      'data-theme-content-layout',
-      'centered'
-    )
+    expect(document.body).toHaveAttribute('data-theme-content-layout', 'full')
     for (const [key, value] of Object.entries(savedPreferences)) {
       expect(localStorage.getItem(key)).toBe(value)
     }
@@ -156,11 +166,14 @@ describe('theme preference persistence', () => {
 
     expect(screen.getByLabelText('Theme mode')).toHaveTextContent('system')
     expect(document.documentElement).toHaveClass('light')
-    expect(document.body).not.toHaveAttribute('data-theme-preset')
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
     expect(document.body).toHaveAttribute('data-theme-font', 'sans')
-    expect(document.body).not.toHaveAttribute('data-theme-radius')
+    expect(document.body).toHaveAttribute('data-theme-radius', 'md')
     expect(document.body).not.toHaveAttribute('data-theme-scale')
-    expect(document.body).toHaveAttribute('data-theme-content-layout', 'full')
+    expect(document.body).toHaveAttribute(
+      'data-theme-content-layout',
+      'centered'
+    )
     for (const key of Object.keys(savedPreferences)) {
       expect(localStorage.getItem(key)).toBeNull()
     }
@@ -178,11 +191,14 @@ describe('theme preference persistence', () => {
       render(<ThemeFixture />)
 
       expect(screen.getByLabelText('Theme mode')).toHaveTextContent('system')
-      expect(document.body).not.toHaveAttribute('data-theme-preset')
+      expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
       expect(document.body).toHaveAttribute('data-theme-font', 'sans')
-      expect(document.body).not.toHaveAttribute('data-theme-radius')
+      expect(document.body).toHaveAttribute('data-theme-radius', 'md')
       expect(document.body).not.toHaveAttribute('data-theme-scale')
-      expect(document.body).toHaveAttribute('data-theme-content-layout', 'full')
+      expect(document.body).toHaveAttribute(
+        'data-theme-content-layout',
+        'centered'
+      )
     }
   )
 
@@ -194,7 +210,7 @@ describe('theme preference persistence', () => {
     render(<ThemeFixture />)
 
     expect(screen.getByLabelText('Theme mode')).toHaveTextContent('system')
-    expect(document.body).not.toHaveAttribute('data-theme-preset')
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
   })
 
   it('still applies and resets preferences when storage writes fail', async () => {
@@ -215,7 +231,7 @@ describe('theme preference persistence', () => {
     await user.click(screen.getByRole('button', { name: 'Reset' }))
 
     expect(screen.getByLabelText('Theme mode')).toHaveTextContent('system')
-    expect(document.body).not.toHaveAttribute('data-theme-preset')
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
   })
 
   it('preserves saved theme preferences during frontend cache initialization', () => {

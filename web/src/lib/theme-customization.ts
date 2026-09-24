@@ -115,12 +115,29 @@ export type ThemeCustomization = {
   contentLayout: ContentLayout
 }
 
+/**
+ * Shipped defaults for every axis of the theme drawer.
+ *
+ * These are the values a first-time visitor (no stored preferences) gets, and
+ * the values the drawer's Reset button restores. They intentionally reproduce
+ * the site's editorial default appearance: Anthropic's warm palette, the
+ * humanist sans body, a 0.5rem corner radius, default density, and content
+ * clamped to a centred column.
+ *
+ * Picking a value here is not enough on its own — the provider decides whether
+ * to write the matching `data-theme-*` attribute or clear it, and CSS can only
+ * see the attribute. `preset` and `radius` are the load-bearing pair: a named
+ * preset exists only as `[data-theme-preset='<name>']`, and every preset
+ * declares its own `--radius`, which would beat a same-valued user choice that
+ * was never written. `scale: 'default'` is the one axis with no CSS block, so
+ * omitting its attribute is equivalent to the Tailwind defaults.
+ */
 export const DEFAULT_THEME_CUSTOMIZATION: ThemeCustomization = {
-  preset: 'default',
-  font: 'default',
-  radius: 'default',
+  preset: 'anthropic',
+  font: 'sans',
+  radius: 'md',
   scale: 'default',
-  contentLayout: 'full',
+  contentLayout: 'centered',
 }
 
 export const THEME_PRESET_VALUES = new Set(
