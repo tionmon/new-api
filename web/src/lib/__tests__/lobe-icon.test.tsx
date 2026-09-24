@@ -36,7 +36,7 @@ describe('Lobe icons', () => {
   ])('includes icon variants when bundling from %s', (root) => {
     // Vitest loads imports without applying Rspack's webpackInclude filter.
     const source = readFileSync(
-      resolve(import.meta.dirname, '../lobe-icon.tsx'),
+      resolve(import.meta.dirname, '../lobe-icon-variant.ts'),
       'utf8'
     )
     const comment = source.match(/\/\*\s*(webpackInclude:[\s\S]*?)\*\//)
